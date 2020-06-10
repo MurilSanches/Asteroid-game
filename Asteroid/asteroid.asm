@@ -11,6 +11,8 @@
       .model flat, stdcall   ; FLAT memory model & STDCALL calling
       option casemap :none   ; set code to case sensitive
 
+
+
 ; #########################################################################
 
       ; ---------------------------------------------
@@ -115,11 +117,10 @@
         CommandLine   dd 0
         hWnd          dd 0
         hInstance     dd 0
-msgtxt         db "Stop Playing",0
-msgtitle       db "Poor Player ver.0.0",0 
+        msgtxt         db "Stop Playing",0
+        msgtitle       db "Poor Player ver.0.0",0 
 		FileName1       db "Star_Wars-_The_Imperial_March_Darth_Vader_s_Theme.mp3",0         
-		FileName2       db "02 That's The Way.mp3",0         
-
+		FileName2       db "zapsplat_science_fiction_retro_laser_beam_002_44337.mp3",0         
 		Play	  db "zapsplat_science_fiction_retro_laser_beam_002_44337.mp3",0		; Sound file
 
 		; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
@@ -199,7 +200,7 @@ WinMain proc hInst     :DWORD,
         mov wc.cbClsExtra,     NULL
         mov wc.cbWndExtra,     NULL
         m2m wc.hInstance,      hInst               ; instance handle
-        mov wc.hbrBackground,  COLOR_BTNFACE+1     ; system color
+        mov wc.hbrBackground,  COLOR_BTNFACE+1    ; system color
         mov wc.lpszMenuName,   NULL
         mov wc.lpszClassName,  offset szClassName  ; window class name
           invoke LoadIcon,hInst,500    ; icon ID   ; resource icon
@@ -234,10 +235,12 @@ WinMain proc hInst     :DWORD,
                               WS_OVERLAPPEDWINDOW,
                               Wtx,Wty,Wwd,Wht,
                               NULL,NULL,
-                              hInst,NULL
+                              NULL,NULL
 
         mov   hWnd,eax  ; copy return value into handle DWORD
 
+
+        ;; menu horizontal
         invoke LoadMenu,hInst,600                 ; load resource menu
         invoke SetMenu,hWnd,eax                   ; set it to main window
 
@@ -396,7 +399,6 @@ WndProc proc hWin   :DWORD,
     .elseif uMsg == WM_LBUTTONDOWN
 
     .elseif uMsg == WM_PAINT
-
             invoke BeginPaint,hWin,ADDR Ps
             mov     hDC, eax
             invoke MoveToEx,hDC, 10,10,0
@@ -429,7 +431,7 @@ WndProc proc hWin   :DWORD,
     ; exits the WndProc procedure without passing this message to the
     ; default window processing done by the operating system.
     ; -------------------------------------------------------------------
-        szText TheText,"Please Confirm Exit"
+        szText TheText,"Voce quer mesmo sair do jogo"
         invoke MessageBox,hWin,ADDR TheText,ADDR szDisplayName,MB_YESNO
           .if eax == IDNO
             return 0
