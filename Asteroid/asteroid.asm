@@ -90,16 +90,16 @@ ret
 paintPos endp
 
 ;; pinta o fundo da tela
-  paintbackground proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
+  paintbackground proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC
     invoke SelectObject, _hMemDC2, h_background
-    invoke BitBlt, _hMemDC, 0, 0, 800, 600, _hMemDC2, 0, 0, SRCCOPY
+    invoke BitBlt, _hMemDC, 0, 0, x, y, _hMemDC2, 0, 0, SRCCOPY
   ret
   paintbackground endp
 
 ;;; desenha a nave
-  paintnave proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
+  paintnave proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC
     invoke SelectObject, _hMemDC2, nave
-    invoke paintPos, _hMemDC, _hMemDC2, addr NAVE_SIZE_POINT, 0;pinta
+    invoke paintPos, _hMemDC, _hMemDC2, addr NAVE_SIZE_POINT, addr posInicial ;pinta
   paintnave endp
 
 ;;; desenha a tela inteira
@@ -108,7 +108,7 @@ paintPos endp
     LOCAL hMemDC:HDC
     LOCAL hMemDC2:HDC
     LOCAL hBitmap:HDC
-
+ 
     invoke BeginPaint, hWnd, ADDR paintstruct
     mov hDC, eax
     invoke CreateCompatibleDC, hDC
@@ -120,10 +120,10 @@ paintPos endp
 
     invoke SelectObject, hMemDC, hBitmap
 
-    invoke paintbackground,  hDC, hMemDC, hMemDC2, hBitmap
-    invoke paintnave, hDC, hMemDC, hMemDC2, hBitmap
+    ;invoke paintbackground, hDC, hMemDC, hMemDC2
+    invoke paintnave, hDC, hMemDC, hMemDC2
 
-    invoke BitBlt, hDC, 0, 0, MaxX, MaxY, hMemDC, 0, 0, SRCCOPY
+    invoke BitBlt, hDC, 0, 0, x, y, hMemDC, 0, 0, SRCCOPY
 
     invoke DeleteDC, hMemDC
     invoke DeleteDC, hMemDC2
@@ -132,6 +132,18 @@ paintPos endp
 
   ret
   paint endp
+
+; thread de desenho
+ paintThread proc p:DWORD
+    .while !over
+        invoke Sleep, 17 ; 60 FPS
+
+        invoke InvalidateRect, hWnd, NULL, FALSE
+
+    .endw
+
+    ret
+paintThread endp 
 
 ;;; proc para encontrar as medidas maximas da tela
   TopXY proc wDim:DWORD, sDim:DWORD
@@ -154,7 +166,7 @@ paintPos endp
         szText szClassName,"Game"
 
         mov wc.cbSize, sizeof WNDCLASSEX
-        mov wc.style, CS_HREDRAW or CS_VREDRAW or CS_BYTEALIGNWINDOW
+        mov wc.style, CS_BYTEALIGNWINDOW
         mov wc.lpfnWndProc, OFFSET WndProc     
         mov wc.cbClsExtra, NULL
         mov wc.cbWndExtra, NULL
@@ -208,26 +220,15 @@ paintPos endp
 
   WinMain endp
 
-  WndProc proc hWin   :DWORD,
-             uMsg   :DWORD,
-             wParam :DWORD,
-             lParam :DWORD
-
-    LOCAL X     :DWORD
-    LOCAL Y     :DWORD        
+  WndProc proc hWin:HWND, uMsg:UINT, wParam:WPARAM, lParam:LPARAM       
 
     .IF uMsg == WM_CREATE
       invoke loadimages
-      mov     X,100
-      mov     Y,100
-    
-    ; funcão do botao fechar 
-    .elseif uMsg == WM_CLOSE
-        szText TheText,"Voce quer mesmo sair do jogo"
-        invoke MessageBox,hWin,ADDR TheText,ADDR AppName,MB_YESNO
-          .if eax == IDNO
-            return 0
-          .endif
+
+      mov eax, offset paintThread
+      invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread2ID
+      invoke CloseHandle, eax
+
     ; após fechar o app
     .elseif uMsg == WM_DESTROY
         invoke PostQuitMessage,NULL

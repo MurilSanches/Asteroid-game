@@ -58,12 +58,15 @@ gameObject ends
   play_dwTo        dd ?
 
   musicadefundo db "Star_Wars-_The_Imperial_March_Darth_Vader_s_Theme.mp3",0         
-    tiro          db "zapsplat_science_fiction_retro_laser_beam_002_44337.mp3",0         
-    explosao	    db "zapsplat_science_fictyion_explosion_puff_smoke_medium_001_45027.mp3",0		; Sound file
+  tiro          db "zapsplat_science_fiction_retro_laser_beam_002_44337.mp3",0         
+  explosao	    db "zapsplat_science_fictyion_explosion_puff_smoke_medium_001_45027.mp3",0		; Sound file
 
-    CommandLine   dd 0
-    hWnd          dd 0
-    hInstance     dd 0
+  CommandLine   dd 0
+  hWnd          dd 0
+  hInstance     dd 0
 
+  over byte 0 ;
+
+    posInicial point<600, 100>
 .DATA?
-
+    thread2ID DWORD ?
