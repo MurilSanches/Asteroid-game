@@ -1,161 +1,39 @@
-; #########################################################################
-;
-;             GENERIC.ASM is a roadmap around a standard 32 bit 
-;              windows application skeleton written in MASM32.
-;
-; #########################################################################
+.386                   
+.model flat, stdcall   
+option casemap :none  
 
-;           Assembler specific instructions for 32 bit ASM code
+include asteroid.inc
 
-      .386                   ; minimum processor needed for 32 bit
-      .model flat, stdcall   ; FLAT memory model & STDCALL calling
-      option casemap :none   ; set code to case sensitive
+szText MACRO Name, Text:VARARG
+  LOCAL lbl
+    jmp lbl
+      Name db Text,0
+    lbl:
+  ENDM
 
+m2m MACRO M1, M2
+  push M2
+  pop  M1
+ENDM
 
+return MACRO arg
+  mov eax, arg
+  ret
+ENDM
 
-; #########################################################################
+  WinMain PROTO :DWORD,:DWORD,:DWORD,:DWORD
+  WndProc PROTO :DWORD,:DWORD,:DWORD,:DWORD
+  TopXY PROTO   :DWORD,:DWORD
+  PlaySound	PROTO	STDCALL :DWORD, :DWORD, :DWORD
 
-      ; ---------------------------------------------
-      ; main include file with equates and structures
-      ; ---------------------------------------------
-      include \masm32\include\windows.inc
+  .DATA
+    AppName db "Asteroid",0
 
+  .DATA?
+    MaxY dd ?
+    MaxX dd ?
 
-
-      ; -------------------------------------------------------------
-      ; In MASM32, each include file created by the L2INC.EXE utility
-      ; has a matching library file. If you need functions from a
-      ; specific library, you use BOTH the include file and library
-      ; file for that library.
-      ; -------------------------------------------------------------
-
-      include \masm32\include\user32.inc
-      include \masm32\include\kernel32.inc
-
-      include \MASM32\INCLUDE\gdi32.inc
-	  include \Masm32\include\winmm.inc 
-
-
-      includelib \masm32\lib\user32.lib
-      includelib \masm32\lib\kernel32.lib
-      includelib \MASM32\LIB\gdi32.lib
-
-; Bibliotecas para MCI tocar o mp3
-;
-
-	  
-	  includelib \Masm32\lib\winmm.lib
-
-
-
-; #########################################################################
-
-; ------------------------------------------------------------------------
-; MACROS are a method of expanding text at assembly time. This allows the
-; programmer a tidy and convenient way of using COMMON blocks of code with
-; the capacity to use DIFFERENT parameters in each block.
-; ------------------------------------------------------------------------
-
-      ; 1. szText
-      ; A macro to insert TEXT into the code section for convenient and 
-      ; more intuitive coding of functions that use byte data as text.
-
-      szText MACRO Name, Text:VARARG
-        LOCAL lbl
-          jmp lbl
-            Name db Text,0
-          lbl:
-        ENDM
-
-      ; 2. m2m
-      ; There is no mnemonic to copy from one memory location to another,
-      ; this macro saves repeated coding of this process and is easier to
-      ; read in complex code.
-
-      m2m MACRO M1, M2
-        push M2
-        pop  M1
-      ENDM
-
-      ; 3. return
-      ; Every procedure MUST have a "ret" to return the instruction
-      ; pointer EIP back to the next instruction after the call that
-      ; branched to it. This macro puts a return value in eax and
-      ; makes the "ret" instruction on one line. It is mainly used
-      ; for clear coding in complex conditionals in large branching
-      ; code such as the WndProc procedure.
-
-      return MACRO arg
-        mov eax, arg
-        ret
-      ENDM
-
-; #########################################################################
-
-; ----------------------------------------------------------------------
-; Prototypes are used in conjunction with the MASM "invoke" syntax for
-; checking the number and size of parameters passed to a procedure. This
-; improves the reliability of code that is written where errors in
-; parameters are caught and displayed at assembly time.
-; ----------------------------------------------------------------------
-
-        WinMain PROTO :DWORD,:DWORD,:DWORD,:DWORD
-        WndProc PROTO :DWORD,:DWORD,:DWORD,:DWORD
-        TopXY PROTO   :DWORD,:DWORD
-		PlaySound	PROTO	STDCALL :DWORD, :DWORD, :DWORD
-; #########################################################################
-
-; ------------------------------------------------------------------------
-; This is the INITIALISED data section meaning that data declared here has
-; an initial value. You can also use an UNINIALISED section if you need
-; data of that type [ .data? ]. Note that they are different and occur in
-; different sections.
-; ------------------------------------------------------------------------
-
-    .data
-        szDisplayName db "Asteroid",0
-        CommandLine   dd 0
-        hWnd          dd 0
-        hInstance     dd 0
-        msgtxt         db "Stop Playing",0
-        msgtitle       db "Poor Player ver.0.0",0 
-		FileName1       db "Star_Wars-_The_Imperial_March_Darth_Vader_s_Theme.mp3",0         
-		FileName2       db "zapsplat_science_fiction_retro_laser_beam_002_44337.mp3",0         
-		Play	  db "zapsplat_science_fiction_retro_laser_beam_002_44337.mp3",0		; Sound file
-
-		; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
-		open_dwCallback     dd ?
-		open_wDeviceID     dd ?
-		open_lpstrDeviceType  dd ?
-		open_lpstrElementName  dd ?
-		open_lpstrAlias     dd ?
-
-		; - MCI_GENERIC_PARMS Structure ( API=mciSendCommand ) -
-		generic_dwCallback   dd ?
-
-		; - MCI_PLAY_PARMS Structure ( API=mciSendCommand ) -
-		play_dwCallback     dd ?
-		play_dwFrom       dd ?
-		play_dwTo        dd ?
-
-
-; #########################################################################
-
-; ------------------------------------------------------------------------
-; This is the start of the code section where executable code begins. This
-; section ending with the ExitProcess() API function call is the only
-; GLOBAL section of code and it provides access to the WinMain function
-; with the necessary parameters, the instance handle and the command line
-; address.
-; ------------------------------------------------------------------------
-
-    .code
-
-; -----------------------------------------------------------------------
-; The label "start:" is the address of the start of the code section and
-; it has a matching "end start" at the end of the file. All procedures in
-; this module must be written between these two.
-; -----------------------------------------------------------------------
+.CODE
 
 start:
     invoke GetModuleHandle, NULL ; provides the instance handle
@@ -165,33 +43,105 @@ start:
     mov CommandLine, eax
 
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT
-    
     invoke ExitProcess,eax       ; cleanup & return to operating system
 
-; #########################################################################
+  getWindowSize proc
+     invoke GetSystemMetrics,SM_CXSCREEN 
+        invoke TopXY,x,eax
+        mov MaxX, eax
 
-WinMain proc hInst     :DWORD,
+        ; pega o tamanho maximo da altura da tela em pixel
+        invoke GetSystemMetrics,SM_CYSCREEN 
+        invoke TopXY,y,eax
+        mov MaxY, eax
+
+    ret
+    
+  getWindowSize endp
+
+  paintPos proc  uses eax _hMemDC:HDC, _hMemDC2:HDC, addrPoint:dword, addrPos:dword
+    assume edx:ptr point
+    assume ecx:ptr point
+
+    mov edx, addrPoint
+    mov ecx, addrPos
+
+    mov eax, [ecx].x
+    mov ebx, [ecx].y
+    invoke TransparentBlt, _hMemDC, eax, ebx, [edx].x, [edx].y, _hMemDC2, 0, 0, [edx].x, [edx].y, 16777215
+
+ret
+paintPos endp
+
+  loadimages proc
+
+    invoke LoadBitmap, hInstance, 100
+    mov nave,eax
+
+    invoke LoadBitmap, hInstance, 101
+    mov h_background, eax
+    ret
+
+  loadimages endp
+
+  paintbackground proc hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
+    invoke SelectObject, _hMemDC2, h_background
+    invoke BitBlt, _hMemDC, 0, 0, 800, 600, _hMemDC2, 0, 0, SRCCOPY
+  ret
+  paintbackground endp
+
+  paintnave proc hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
+    invoke SelectObject, _hMemDC2, nave
+    invoke paintPos, _hMemDC, _hMemDC2, addr NAVE_, addr pac.playerObj.pos ;pinta
+  paintnave endp
+
+  paint proc hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
+
+    invoke BeginPaint, hWnd, ADDR paintstruct
+    mov hDC, eax
+    invoke CreateCompatibleDC, hDC
+    mov _hMemDC, eax
+    invoke CreateCompatibleDC, hDC
+    mov _hMemDC2, eax
+    invoke CreateCompatibleBitmap, hDC, MaxX, MaxY
+    mov _hBitmap, eax
+
+    invoke SelectObject, hMemDC, hBitmap
+
+
+
+
+    invoke BitBlt, hDC, 0, 0, MaxX, MaxY, _hMemDC, 0, 0, SRCCOPY
+
+    invoke DeleteDC, _hMemDC
+    invoke DeleteDC, _hMemDC2
+    invoke DeleteObject, _hBitmap
+    invoke EndPaint, hWnd, ADDR paintstruct
+
+  ret
+  paint endp
+
+  TopXY proc wDim:DWORD, sDim:DWORD
+
+      shr sDim, 1      ; divide screen dimension by 2
+      shr wDim, 1      ; divide window dimension by 2
+      mov eax, wDim    ; copy window dimension into eax
+      sub sDim, eax    ; sub half win dimension from half screen dimension
+
+      return sDim
+
+  TopXY endp
+
+; cria a janela 
+  WinMain proc hInst     :DWORD,
              hPrevInst :DWORD,
              CmdLine   :DWORD,
              CmdShow   :DWORD
 
-        ;====================
-        ; Put LOCALs on stack
-        ;====================
-
         LOCAL wc   :WNDCLASSEX
         LOCAL msg  :MSG
 
-        LOCAL Wwd  :DWORD
-        LOCAL Wht  :DWORD
-        LOCAL Wtx  :DWORD
-        LOCAL Wty  :DWORD
-
-        szText szClassName,"Generic_Class"
-
-        ;==================================================
-        ; Fill WNDCLASSEX structure with required variables
-        ;==================================================
+        szText szClassName,"Game"
 
         mov wc.cbSize,         sizeof WNDCLASSEX
         mov wc.style,          CS_HREDRAW or CS_VREDRAW \
@@ -210,277 +160,99 @@ WinMain proc hInst     :DWORD,
         mov wc.hIconSm,        0
 
         invoke RegisterClassEx, ADDR wc     ; register the window class
-
-        ;================================
-        ; Centre window at following size
-        ;================================
-
-        mov Wwd, 500
-        mov Wht, 350
-
-        invoke GetSystemMetrics,SM_CXSCREEN ; get screen width in pixels
-        invoke TopXY,Wwd,eax
-        mov Wtx, eax
-
-        invoke GetSystemMetrics,SM_CYSCREEN ; get screen height in pixels
-        invoke TopXY,Wht,eax
-        mov Wty, eax
-
-        ; ==================================
-        ; Create the main application window
-        ; ==================================
+       
+       ; cria a tela do aplicativo
         invoke CreateWindowEx,WS_EX_OVERLAPPEDWINDOW,
                               ADDR szClassName,
-                              ADDR szDisplayName,
+                              ADDR AppName,
                               WS_OVERLAPPEDWINDOW,
-                              Wtx,Wty,Wwd,Wht,
+                              MaxX, MaxY, x, y,
                               NULL,NULL,
-                              NULL,NULL
+                              hInst,NULL
 
         mov   hWnd,eax  ; copy return value into handle DWORD
 
 
         ;; menu horizontal
-        invoke LoadMenu,hInst,600                 ; load resource menu
-        invoke SetMenu,hWnd,eax                   ; set it to main window
+        ;invoke LoadMenu,hInst,600                 ; load resource menu
+        ;invoke SetMenu,hWnd,eax                   ; set it to main window
 
         invoke ShowWindow,hWnd,SW_SHOWNORMAL      ; display the window
         invoke UpdateWindow,hWnd                  ; update the display
 
-      ;===================================
-      ; Loop until PostQuitMessage is sent
-      ;===================================
+    .WHILE TRUE
+                invoke GetMessage, ADDR msg,NULL,0,0 
+                .BREAK .IF (!eax)
+                invoke TranslateMessage, ADDR msg 
+                invoke DispatchMessage, ADDR msg 
+    .ENDW
+      mov eax,msg.wParam ;retorna o código de saída no eax
+      ret 
 
-    StartLoop:
-      invoke GetMessage,ADDR msg,NULL,0,0         ; get each message
-      cmp eax, 0                                  ; exit if GetMessage()
-      je ExitLoop                                 ; returns zero
-      invoke TranslateMessage, ADDR msg           ; translate it
-      invoke DispatchMessage,  ADDR msg           ; send it to message proc
-      jmp StartLoop
-    ExitLoop:
+  WinMain endp
 
-      return msg.wParam
-
-WinMain endp
-
-; #########################################################################
-
-WndProc proc hWin   :DWORD,
+  WndProc proc hWin   :DWORD,
              uMsg   :DWORD,
              wParam :DWORD,
              lParam :DWORD
 
-    LOCAL hDC    :DWORD
+    LOCAL hDC    :HDC
     LOCAL Ps     :PAINTSTRUCT
     LOCAL X     :DWORD
     LOCAL Y     :DWORD
-; -------------------------------------------------------------------------
-; Message are sent by the operating system to an application through the
-; WndProc proc. Each message can have additional values associated with it
-; in the two parameters, wParam & lParam. The range of additional data that
-; can be passed to an application is determined by the message.
-; -------------------------------------------------------------------------
 
-    .if uMsg == WM_COMMAND
-    ;----------------------------------------------------------------------
-    ; The WM_COMMAND message is sent by menus, buttons and toolbar buttons.
-    ; Processing the wParam parameter of it is the method of obtaining the
-    ; control's ID number so that the code for each operation can be
-    ; processed. NOTE that the ID number is in the LOWORD of the wParam
-    ; passed with the WM_COMMAND message. There may be some instances where
-    ; an application needs to seperate the high and low words of wParam.
-    ; ---------------------------------------------------------------------
-    
-    ;======== menu commands ========
+    LOCAL hMemDC:HDC
+    LOCAL hMemDC2:HDC
+    LOCAL hBitmap:HDC
 
-        .if wParam == 1000
-            invoke SendMessage,hWin,WM_SYSCOMMAND,SC_CLOSE,NULL
-        .elseif wParam == 1900
-            ;-----------------------------------------------------
-			;MCI_Open prams;
-			;-----------------------------------------------------
-			mov   open_lpstrDeviceType, 0h         ;fill MCI_OPEN_PARMS structure
-			mov   open_lpstrElementName,OFFSET FileName2
-			
-			
-			;push    OFFSET open_dwCallback                  ;dwParam, MCI_OPEN_PARMS struc.
-			;push    0200h                                   ;fdwCommand,
-                                               ;MCI_OPEN_ELEMENT   = 0200h
-                                               ;MCI_OPEN_SHAREABLE = 0100h
-			;push    0803h                                   ;uMsg, command msg. , MCI_OPEN
-			;push    0h                                      ;IDDevice, here not used
-			;call    mciSendCommandA                         ;- API Function -
-			
-			;-----------------------------------------------------  
-			; Send Open command with the file 
-			;-----------------------------------------------------
-			invoke mciSendCommandA,0,MCI_OPEN, MCI_OPEN_ELEMENT,offset open_dwCallback 
-			cmp   eax,0h                 
-			
-			jne   ErrorPrg1  
-					
-			;------------------------------------------------------------------------------
-			; API "mciSendCommandA", MCI_PLAY command begins transmitting output data.
-			;------------------------------------------------------------------------------
-			invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_FROM or MCI_NOTIFY,offset play_dwCallback
-			;invoke mciSendCommand,open_wDeviceID,MCI_PLAY,MCI_NOTIFY,offset play_dwCallback
-			;------------------------------------------------------------------------------
-			; API "mciSendCommandA", MCI_PLAY command begins transmitting output data.
-			;------------------------------------------------------------------------------
-;push    OFFSET play_dwCallback                  ;dwParam, MCI_PLAY_PARMS struc.
-;push    0h                                      ;fdwCommand, MCI_FROM
-;push    0806h                                   ;uMsg, command msg. , MCI_PLAY
-;push    open_wDeviceID                          ;IDDevice, given from MCI_OPEN
-;call    mciSendCommandA                         ;- API Function -
-			
-			cmp   eax,0h         
-			jne   ErrorPrg2 
-			;------------------------------------------------------------------------------
-			; API "mciSendCommandA" here closes the device
-			;------------------------------------------------------------------------------
-			;invoke mciSendCommand,open_wDeviceID,MCI_CLOSE,0,offset generic_dwCallback		
-			;invoke MessageBox,0,addr msgtxt,addr msgtitle ,MB_OK 
-			
-			jmp fim	
-		ErrorPrg1:
-			szText TheMsg2,"Error1 ---- "
-			invoke MessageBox,hWin,ADDR TheMsg2,ADDR szDisplayName,MB_OK			
-			jmp sai
-		ErrorPrg2:			
-            szText TheMsg3,"Error2 ---- "
-            invoke MessageBox,hWin,ADDR TheMsg3,ADDR szDisplayName,MB_OK			
-			jmp sai
-		fim:
-            szText TheMsg,"Terminou ---- "
-            invoke MessageBox,hWin,ADDR TheMsg,ADDR szDisplayName,MB_OK			
-		sai:
-		
-		.elseif wParam == 1901			
-			szText TheMsg2a,"Error1 ---- "
-			szText TheMsg3a,"Error2 ---- "
-			mov   open_lpstrDeviceType, 0h         ;fill MCI_OPEN_PARMS structure
-			mov   open_lpstrElementName,OFFSET FileName1
-			invoke mciSendCommandA,0,MCI_OPEN, MCI_OPEN_ELEMENT,offset open_dwCallback 
-			cmp   eax,0h                 	
-			je    next
-			invoke MessageBox,hWin,ADDR TheMsg2a,ADDR szDisplayName,MB_OK			
-			jmp    sai1
-		next:	
-			;invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_FROM,offset play_dwCallback
-			invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_NOTIFY,offset play_dwCallback			
-			cmp   eax,0h                 	
-			je    next2
-			invoke MessageBox,hWin,ADDR TheMsg3a,ADDR szDisplayName,MB_OK			
-		next2:		
-		
-		sai1:
-		.elseif wParam == 1902
-			invoke mciSendCommandA,open_wDeviceID,MCI_CLOSE,0,offset generic_dwCallback		
-; API "mciSendCommandA" here closes the device
-;------------------------------------------------------------------------------
-;push    OFFSET generic_dwCallback   ;dwParam, address MCI_GENERIC_PARMS struc.
-;push    0h                          ;fdwCommand,
-;push    804h                        ;uMsg, command message, MCI_CLOSE
-;push    open_wDeviceID              ;IDDevice,
-;call    mciSendCommandA             ;- API Function -
+    .IF uMsg == WM_CREATE
+      invoke loadimages
+      invoke paint, hDC, hMemDC, hMemDC2, hBitmap
 
-
-        
-		.elseif wParam == 1903
-		  invoke PlaySound, ADDR Play, NULL, SND_FILENAME or SND_ASYNC ;Cat talks @ end of fence 
-		.endif  
-	.elseif uMsg == MM_MCINOTIFY
-	
-			szText TheMsg3B,"pODE FECHAR AGORA "
-            invoke MessageBox,hWin,ADDR TheMsg3B,ADDR szDisplayName,MB_OK			
-		
-    ;====== end menu commands ======
-    .elseif uMsg == WM_LBUTTONDOWN
-
-    .elseif uMsg == WM_PAINT
-            invoke BeginPaint,hWin,ADDR Ps
-            mov     hDC, eax
-            invoke MoveToEx,hDC, 10,10,0
-            invoke LineTo,hDC,X,Y
-
-            invoke EndPaint,hWin,ADDR Ps
-            return  0
-
-    .elseif uMsg == WM_LBUTTONDOWN
-            
+    .elseif uMsg == WM_LBUTTONDOWN   
+     
 
     .elseif uMsg == WM_CREATE
-    ; --------------------------------------------------------------------
-    ; This message is sent to WndProc during the CreateWindowEx function
-    ; call and is processed before it returns. This is used as a position
-    ; to start other items such as controls. IMPORTANT, the handle for the
-    ; CreateWindowEx call in the WinMain does not yet exist so the HANDLE
-    ; passed to the WndProc [ hWin ] must be used here for any controls
-    ; or child windows.
-    ; --------------------------------------------------------------------
         mov     X,100
         mov     Y,100
     
+    ; funcão do botao fechar 
     .elseif uMsg == WM_CLOSE
-    ; -------------------------------------------------------------------
-    ; This is the place where various requirements are performed before
-    ; the application exits to the operating system such as deleting
-    ; resources and testing if files have been saved. You have the option
-    ; of returning ZERO if you don't wish the application to close which
-    ; exits the WndProc procedure without passing this message to the
-    ; default window processing done by the operating system.
-    ; -------------------------------------------------------------------
         szText TheText,"Voce quer mesmo sair do jogo"
-        invoke MessageBox,hWin,ADDR TheText,ADDR szDisplayName,MB_YESNO
+        invoke MessageBox,hWin,ADDR TheText,ADDR AppName,MB_YESNO
           .if eax == IDNO
             return 0
           .endif
-
+    ; após fechar o app
     .elseif uMsg == WM_DESTROY
-    ; ----------------------------------------------------------------
-    ; This message MUST be processed to cleanly exit the application.
-    ; Calling the PostQuitMessage() function makes the GetMessage()
-    ; function in the WinMain() main loop return ZERO which exits the
-    ; application correctly. If this message is not processed properly
-    ; the window disappears but the code is left in memory.
-    ; ----------------------------------------------------------------
         invoke PostQuitMessage,NULL
-        return 0 
+        return 0
+
+    .elseif uMsg == WM_KEYDOWN ;se o usuario apertou alguma tecla
+
+      .if (wParam == 77h || wParam == 57h || wParam == VK_UP) ;w ou seta pra cima
+          ;print "cima", 13,10
+          ;mov direction, D_TOP
+
+      .elseif (wParam == 61h || wParam == 41h || wParam == VK_LEFT) ;a ou seta pra esquerda
+          ;print "esquerda", 13,10
+          ;mov direction, D_LEFT
+
+      .elseif (wParam == 73h || wParam == 53h || wParam == VK_DOWN) ;s ou seta pra baixo
+          ;print "baixo", 13,10
+          ;mov direction, D_DOWN
+
+      .elseif (wParam == 64h || wParam == 44h || wParam == VK_RIGHT) ;d ou seta pra direita
+          ;print "direita", 13,10
+          ;mov direction, D_RIGHT
+
+      .elseif (wParam == 20)
+          ;atira
+      .endif
     .endif
 
     invoke DefWindowProc,hWin,uMsg,wParam,lParam
-    ; --------------------------------------------------------------------
-    ; Default window processing is done by the operating system for any
-    ; message that is not processed by the application in the WndProc
-    ; procedure. If the application requires other than default processing
-    ; it executes the code when the message is trapped and returns ZERO
-    ; to exit the WndProc procedure before the default window processing
-    ; occurs with the call to DefWindowProc().
-    ; --------------------------------------------------------------------
-
     ret
 
-WndProc endp
-
-; ########################################################################
-
-TopXY proc wDim:DWORD, sDim:DWORD
-
-    ; ----------------------------------------------------
-    ; This procedure calculates the top X & Y co-ordinates
-    ; for the CreateWindowEx call in the WinMain procedure
-    ; ----------------------------------------------------
-
-    shr sDim, 1      ; divide screen dimension by 2
-    shr wDim, 1      ; divide window dimension by 2
-    mov eax, wDim    ; copy window dimension into eax
-    sub sDim, eax    ; sub half win dimension from half screen dimension
-
-    return sDim
-
-TopXY endp
-
-; ########################################################################
-
+  WndProc endp
 end start
