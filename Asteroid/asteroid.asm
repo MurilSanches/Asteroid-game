@@ -45,12 +45,27 @@ start:
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT
     invoke ExitProcess,eax       ; cleanup & return to operating system
 
+
+;;; carrega as imagens 
+  loadimages proc
+
+    invoke LoadBitmap, hInstance, 100
+    mov nave,eax
+
+    invoke LoadBitmap, hInstance, 101
+    mov h_background, eax
+    ret
+
+  loadimages endp    
+
+
+;;; pega o tamanho maximo da tela
   getWindowSize proc
+
      invoke GetSystemMetrics,SM_CXSCREEN 
         invoke TopXY,x,eax
         mov MaxX, eax
 
-        ; pega o tamanho maximo da altura da tela em pixel
         invoke GetSystemMetrics,SM_CYSCREEN 
         invoke TopXY,y,eax
         mov MaxY, eax
@@ -59,6 +74,7 @@ start:
     
   getWindowSize endp
 
+;;; pinta uma posição qualquer
   paintPos proc  uses eax _hMemDC:HDC, _hMemDC2:HDC, addrPoint:dword, addrPos:dword
     assume edx:ptr point
     assume ecx:ptr point
@@ -73,54 +89,51 @@ start:
 ret
 paintPos endp
 
-  loadimages proc
-
-    invoke LoadBitmap, hInstance, 100
-    mov nave,eax
-
-    invoke LoadBitmap, hInstance, 101
-    mov h_background, eax
-    ret
-
-  loadimages endp
-
-  paintbackground proc hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
+;; pinta o fundo da tela
+  paintbackground proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
     invoke SelectObject, _hMemDC2, h_background
     invoke BitBlt, _hMemDC, 0, 0, 800, 600, _hMemDC2, 0, 0, SRCCOPY
   ret
   paintbackground endp
 
-  paintnave proc hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
+;;; desenha a nave
+  paintnave proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
     invoke SelectObject, _hMemDC2, nave
-    invoke paintPos, _hMemDC, _hMemDC2, addr NAVE_, addr pac.playerObj.pos ;pinta
+    invoke paintPos, _hMemDC, _hMemDC2, addr NAVE_SIZE_POINT, 0;pinta
   paintnave endp
 
-  paint proc hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC, _hBitmap:HDC
+;;; desenha a tela inteira
+  paint proc 
+    LOCAL hDC:HDC
+    LOCAL hMemDC:HDC
+    LOCAL hMemDC2:HDC
+    LOCAL hBitmap:HDC
 
     invoke BeginPaint, hWnd, ADDR paintstruct
     mov hDC, eax
     invoke CreateCompatibleDC, hDC
-    mov _hMemDC, eax
+    mov hMemDC, eax
     invoke CreateCompatibleDC, hDC
-    mov _hMemDC2, eax
+    mov hMemDC2, eax
     invoke CreateCompatibleBitmap, hDC, MaxX, MaxY
-    mov _hBitmap, eax
+    mov hBitmap, eax
 
     invoke SelectObject, hMemDC, hBitmap
 
+    invoke paintbackground,  hDC, hMemDC, hMemDC2, hBitmap
+    invoke paintnave, hDC, hMemDC, hMemDC2, hBitmap
 
+    invoke BitBlt, hDC, 0, 0, MaxX, MaxY, hMemDC, 0, 0, SRCCOPY
 
-
-    invoke BitBlt, hDC, 0, 0, MaxX, MaxY, _hMemDC, 0, 0, SRCCOPY
-
-    invoke DeleteDC, _hMemDC
-    invoke DeleteDC, _hMemDC2
-    invoke DeleteObject, _hBitmap
+    invoke DeleteDC, hMemDC
+    invoke DeleteDC, hMemDC2
+    invoke DeleteObject, hBitmap
     invoke EndPaint, hWnd, ADDR paintstruct
 
   ret
   paint endp
 
+;;; proc para encontrar as medidas maximas da tela
   TopXY proc wDim:DWORD, sDim:DWORD
 
       shr sDim, 1      ; divide screen dimension by 2
@@ -133,35 +146,45 @@ paintPos endp
   TopXY endp
 
 ; cria a janela 
-  WinMain proc hInst     :DWORD,
-             hPrevInst :DWORD,
-             CmdLine   :DWORD,
-             CmdShow   :DWORD
-
-        LOCAL wc   :WNDCLASSEX
-        LOCAL msg  :MSG
+  WinMain proc hInst :HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR, CmdShow:DWORD
+        LOCAL clientRect:RECT
+        LOCAL wc:WNDCLASSEX
+        LOCAL msg:MSG
 
         szText szClassName,"Game"
 
-        mov wc.cbSize,         sizeof WNDCLASSEX
-        mov wc.style,          CS_HREDRAW or CS_VREDRAW \
-                               or CS_BYTEALIGNWINDOW
-        mov wc.lpfnWndProc,    offset WndProc      ; address of WndProc
-        mov wc.cbClsExtra,     NULL
-        mov wc.cbWndExtra,     NULL
-        m2m wc.hInstance,      hInst               ; instance handle
-        mov wc.hbrBackground,  COLOR_BTNFACE+1    ; system color
-        mov wc.lpszMenuName,   NULL
-        mov wc.lpszClassName,  offset szClassName  ; window class name
-          invoke LoadIcon,hInst,500    ; icon ID   ; resource icon
-        mov wc.hIcon,          eax
-          invoke LoadCursor,NULL,IDC_ARROW         ; system cursor
+        mov wc.cbSize, sizeof WNDCLASSEX
+        mov wc.style, CS_HREDRAW or CS_VREDRAW or CS_BYTEALIGNWINDOW
+        mov wc.lpfnWndProc, OFFSET WndProc     
+        mov wc.cbClsExtra, NULL
+        mov wc.cbWndExtra, NULL
+
+        m2m wc.hInstance, hInst               
+        mov wc.hbrBackground, NULL    
+        mov wc.lpszMenuName, NULL
+        mov wc.lpszClassName, offset szClassName  
+
+        invoke LoadIcon, hInst, 500    
+        mov wc.hIcon, eax
+
+        invoke LoadCursor, NULL, IDC_ARROW         
         mov wc.hCursor,        eax
         mov wc.hIconSm,        0
 
-        invoke RegisterClassEx, ADDR wc     ; register the window class
+        invoke RegisterClassEx, ADDR wc  
+
+        mov clientRect.left, 0
+        mov clientRect.top, 0
+        mov clientRect.right, x
+        mov clientRect.bottom, y
+
+        invoke AdjustWindowRect, addr clientRect, WS_CAPTION, FALSE
+
+        mov eax, clientRect.right
+        sub eax, clientRect.left
+        mov ebx, clientRect.bottom
+        sub ebx, clientRect.top
        
-       ; cria a tela do aplicativo
         invoke CreateWindowEx,WS_EX_OVERLAPPEDWINDOW,
                               ADDR szClassName,
                               ADDR AppName,
@@ -170,15 +193,9 @@ paintPos endp
                               NULL,NULL,
                               hInst,NULL
 
-        mov   hWnd,eax  ; copy return value into handle DWORD
-
-
-        ;; menu horizontal
-        ;invoke LoadMenu,hInst,600                 ; load resource menu
-        ;invoke SetMenu,hWnd,eax                   ; set it to main window
-
-        invoke ShowWindow,hWnd,SW_SHOWNORMAL      ; display the window
-        invoke UpdateWindow,hWnd                  ; update the display
+        mov   hWnd,eax 
+        invoke ShowWindow,hWnd,SW_SHOWNORMAL      
+        invoke UpdateWindow,hWnd                  
 
     .WHILE TRUE
                 invoke GetMessage, ADDR msg,NULL,0,0 
@@ -196,25 +213,13 @@ paintPos endp
              wParam :DWORD,
              lParam :DWORD
 
-    LOCAL hDC    :HDC
-    LOCAL Ps     :PAINTSTRUCT
     LOCAL X     :DWORD
-    LOCAL Y     :DWORD
-
-    LOCAL hMemDC:HDC
-    LOCAL hMemDC2:HDC
-    LOCAL hBitmap:HDC
+    LOCAL Y     :DWORD        
 
     .IF uMsg == WM_CREATE
       invoke loadimages
-      invoke paint, hDC, hMemDC, hMemDC2, hBitmap
-
-    .elseif uMsg == WM_LBUTTONDOWN   
-     
-
-    .elseif uMsg == WM_CREATE
-        mov     X,100
-        mov     Y,100
+      mov     X,100
+      mov     Y,100
     
     ; funcão do botao fechar 
     .elseif uMsg == WM_CLOSE
@@ -227,6 +232,9 @@ paintPos endp
     .elseif uMsg == WM_DESTROY
         invoke PostQuitMessage,NULL
         return 0
+
+    .elseif uMsg == WM_PAINT
+      invoke paint
 
     .elseif uMsg == WM_KEYDOWN ;se o usuario apertou alguma tecla
 
