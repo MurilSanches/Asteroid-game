@@ -4,34 +4,12 @@ option casemap :none
 
 include asteroid.inc
 
-szText MACRO Name, Text:VARARG
-  LOCAL lbl
-    jmp lbl
-      Name db Text,0
-    lbl:
-  ENDM
-
-m2m MACRO M1, M2
-  push M2
-  pop  M1
-ENDM
-
-return MACRO arg
-  mov eax, arg
-  ret
-ENDM
-
-  WinMain PROTO :DWORD,:DWORD,:DWORD,:DWORD
-  WndProc PROTO :DWORD,:DWORD,:DWORD,:DWORD
-  TopXY PROTO   :DWORD,:DWORD
-  PlaySound	PROTO	STDCALL :DWORD, :DWORD, :DWORD
-
   .DATA
     AppName db "Asteroid",0
 
   .DATA?
-    MaxY dd ?
-    MaxX dd ?
+    hInstance HINSTANCE ?
+    CommandLine LPSTR ?
 
 .CODE
 
@@ -121,13 +99,16 @@ paintPos endp
     invoke SelectObject, hMemDC, hBitmap
 
     ;invoke paintbackground, hDC, hMemDC, hMemDC2
-    invoke paintnave, hDC, hMemDC, hMemDC2
+    ;invoke paintnave, hDC, hMemDC, hMemDC2
 
+    invoke SelectObject, hMemDC, h_background
     invoke BitBlt, hDC, 0, 0, x, y, hMemDC, 0, 0, SRCCOPY
+
+    invoke SelectObject, hMemDC2, nave
+    invoke TransparentBlt, hMemDC, navePos.x, navePos.y, 45, 40, hMemDC2, 0, 0, 45, 40, 16777215
 
     invoke DeleteDC, hMemDC
     invoke DeleteDC, hMemDC2
-    invoke DeleteObject, hBitmap
     invoke EndPaint, hWnd, ADDR paintstruct
 
   ret
@@ -156,6 +137,12 @@ paintThread endp
       return sDim
 
   TopXY endp
+
+  SetTamanho proc
+    mov navePos.x, 370
+    mov navePos.y, 500
+    ret
+  SetTamanho endp
 
 ; cria a janela 
   WinMain proc hInst :HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR, CmdShow:DWORD
@@ -223,6 +210,7 @@ paintThread endp
   WndProc proc hWin:HWND, uMsg:UINT, wParam:WPARAM, lParam:LPARAM       
 
     .IF uMsg == WM_CREATE
+      invoke SetTamanho
       invoke loadimages
 
       mov eax, offset paintThread

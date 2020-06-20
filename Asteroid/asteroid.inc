@@ -1,3 +1,4 @@
+;include files
 include \masm32\include\windows.inc
 
 include \masm32\include\user32.inc
@@ -7,11 +8,20 @@ include \Masm32\include\winmm.inc
 include \masm32\include\msimg32.inc
 
 
+;libraries
 includelib \masm32\lib\user32.lib
 includelib \masm32\lib\kernel32.lib
 includelib \masm32\lib\gdi32.lib
 includelib \masm32\lib\msimg32.lib
 includelib \masm32\lib\winmm.lib
+
+; Local prototypes
+
+WinMain      PROTO :DWORD,:DWORD,:DWORD,:DWORD
+WndProc      PROTO :DWORD,:DWORD,:DWORD,:DWORD
+TopXY        PROTO :DWORD,:DWORD
+FillBuffer   PROTO :DWORD,:DWORD,:BYTE
+Paint_Proc   PROTO :DWORD,:DWORD
 
 ;struct que é usada para definir coisas com x e y (posição e velocidade)
 point struct 
@@ -20,11 +30,30 @@ point struct
 point ends
 
 ;atributos que todo objeto tem, serve como uma classe mãe
-gameObject struct
-    initPos     point <> 
-    pos         point <>
-    speed       point <>
-gameObject ends
+;nave struct
+    ;imagem dd 0
+    ;navePos point<>
+;nave ends
+
+
+;Local macros
+
+szText MACRO Name, Text:VARARG
+  LOCAL lbl
+    jmp lbl
+      Name db Text,0
+    lbl:
+  ENDM
+
+m2m MACRO M1, M2
+  push M2
+  pop  M1
+ENDM
+
+return MACRO arg
+  mov eax, arg
+  ret
+ENDM
 
 
 .CONST
@@ -35,8 +64,12 @@ gameObject ends
 .DATA
 
   h_background        dd 0
+  
+    nave dd 0
 
-  nave dd 0
+    navePos point<>
+
+  hWnd          dd 0
 
   NAVE_SIZE_POINT point<30,30>
 
@@ -61,12 +94,12 @@ gameObject ends
   tiro          db "zapsplat_science_fiction_retro_laser_beam_002_44337.mp3",0         
   explosao	    db "zapsplat_science_fictyion_explosion_puff_smoke_medium_001_45027.mp3",0		; Sound file
 
-  CommandLine   dd 0
-  hWnd          dd 0
-  hInstance     dd 0
-
   over byte 0 ;
 
     posInicial point<600, 100>
 .DATA?
     thread2ID DWORD ?
+    MaxY dd ?
+    MaxX dd ?
+
+
