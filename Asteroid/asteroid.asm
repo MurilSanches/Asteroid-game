@@ -1,6 +1,6 @@
 .386                   
 .model flat, stdcall   
-option casemap :none  
+option casemap:none  
 
 include asteroid.inc
 
@@ -13,7 +13,9 @@ include asteroid.inc
 
 .CODE
 
-start:
+start:  
+    ;invoke  uFMOD_PlaySong, musicaDeFundo, 0, XM_FILE
+
     invoke GetModuleHandle, NULL ; provides the instance handle
     mov hInstance, eax
 
@@ -30,8 +32,14 @@ start:
     invoke LoadBitmap, hInstance, 100
     mov nave,eax
 
-    invoke LoadBitmap, hInstance, 101
-    mov h_background, eax
+    invoke LoadBitmap, hInstance, 102
+    mov fundoDoJogo, eax
+
+    invoke LoadBitmap, hInstance, 103
+    mov coracao, eax
+
+    invoke LoadBitmap, hInstance, 104
+    mov laser, eax
     ret
 
   loadimages endp    
@@ -41,16 +49,43 @@ start:
   getWindowSize proc
 
      invoke GetSystemMetrics,SM_CXSCREEN 
-        invoke TopXY,x,eax
+        invoke TopXY, X, eax
         mov MaxX, eax
 
         invoke GetSystemMetrics,SM_CYSCREEN 
-        invoke TopXY,y,eax
+        invoke TopXY, Y, eax
         mov MaxY, eax
 
     ret
     
   getWindowSize endp
+
+;;; estados do jogo
+
+estagiosDoJogo proc
+
+  .if estagio == 0
+    mov eax, fundoDoInicio
+    mov telaAtual, eax
+  .endif
+
+  .if estagio == 1
+    mov eax, fundoDoJogo
+    mov telaAtual, eax
+  .endif
+
+  .if estagio == 2 
+    mov eax, fundoPerdeu
+    mov telaAtual, eax
+  .endif
+
+  .if estagio == 3
+    mov eax, fundoRank
+    mov telaAtual, eax
+  .endif
+
+  ret
+estagiosDoJogo endp
 
 ;;; pinta uma posição qualquer
   paintPos proc  uses eax _hMemDC:HDC, _hMemDC2:HDC, addrPoint:dword, addrPos:dword
@@ -69,17 +104,11 @@ paintPos endp
 
 ;; pinta o fundo da tela
   paintbackground proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC
-    invoke SelectObject, _hMemDC2, h_background
-    invoke BitBlt, _hMemDC, 0, 0, x, y, _hMemDC2, 0, 0, SRCCOPY
+    invoke SelectObject, _hMemDC2, telaAtual
+    invoke BitBlt, _hMemDC, 0, 0, X, Y, _hMemDC2, 0, 0, SRCCOPY
   ret
   paintbackground endp
-
-;;; desenha a nave
-  paintnave proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC
-    invoke SelectObject, _hMemDC2, nave
-    invoke paintPos, _hMemDC, _hMemDC2, addr NAVE_SIZE_POINT, addr posInicial ;pinta
-  paintnave endp
-
+  
 ;;; desenha a tela inteira
   paint proc 
     LOCAL hDC:HDC
@@ -98,17 +127,50 @@ paintPos endp
 
     invoke SelectObject, hMemDC, hBitmap
 
-    ;invoke paintbackground, hDC, hMemDC, hMemDC2
-    ;invoke paintnave, hDC, hMemDC, hMemDC2
+    invoke estagiosDoJogo
 
-    invoke SelectObject, hMemDC, h_background
-    invoke BitBlt, hDC, 0, 0, x, y, hMemDC, 0, 0, SRCCOPY
+    invoke SelectObject, hMemDC, telaAtual
+    invoke BitBlt, hDC, 0, 0, X, Y, hMemDC, 0, 0, SRCCOPY
 
-    invoke SelectObject, hMemDC2, nave
-    invoke TransparentBlt, hMemDC, navePos.x, navePos.y, 45, 40, hMemDC2, 0, 0, 45, 40, 16777215
+    .if estagio == 1
+
+      ; desenha a nave
+      invoke SelectObject, hMemDC2, nave
+      invoke TransparentBlt, hDC, navePos.x, navePos.y, NAVE_SIZE.x, NAVE_SIZE.y, hMemDC2, 0, 0, NAVE_SIZE.x, NAVE_SIZE.y, 16777215
+
+      ; desenha a vida
+      invoke SelectObject, hMemDC2, coracao
+      mov ebx, 0
+      movzx ecx, naveVida ;guarda quantas vidas ele tem
+      .while ebx != ecx 
+        mov eax, 36
+        mul ebx
+        push ecx
+        invoke TransparentBlt, hDC, eax, 0, LIFE_SIZE.x, LIFE_SIZE.y, hMemDC2, 0, 0, LIFE_SIZE.x, LIFE_SIZE.y, 16777215
+        pop ecx
+        inc ebx
+      .endw 
+
+      ; desenha o laser
+      .if lancou == 1 
+        invoke SelectObject, hMemDC2, laser
+        mov ebx, navePos.x
+        invoke TransparentBlt, hDC, navePos.x, navePos.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215
+        
+        ;mov ebx, navePos.x + 10
+        ;invoke TransparentBlt, hDC, ebx, navePos.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215
+
+
+        mov lancou, 0
+      .endif
+      
+    .endif
+
+    invoke BitBlt, hDC, 0, 0, MaxX, MaxY, hMemDC, 0, 0, SRCCOPY
 
     invoke DeleteDC, hMemDC
     invoke DeleteDC, hMemDC2
+    invoke DeleteObject, hBitmap
     invoke EndPaint, hWnd, ADDR paintstruct
 
   ret
@@ -125,6 +187,26 @@ paintPos endp
 
     ret
 paintThread endp 
+
+fixCoordinates proc addrObj:dword
+assume eax:ptr point
+    mov eax, addrObj
+
+    .if [eax].x > 800 && [eax].x < 80000000h
+        mov [eax].x, 20
+    .endif
+    .if [eax].x <= 10 || [eax].x > 80000000h
+        mov [eax].x, 800 - 20 
+    .endif
+    .if [eax].y > 600 - 30 && [eax].y < 80000000h
+        mov [eax].y, 20
+    .endif
+    .if [eax].y <= 10 || [eax].y > 80000000h
+        mov [eax].y, 600 - 80 
+    .endif
+assume eax:nothing
+ret
+fixCoordinates endp
 
 ;;; proc para encontrar as medidas maximas da tela
   TopXY proc wDim:DWORD, sDim:DWORD
@@ -143,6 +225,81 @@ paintThread endp
     mov navePos.y, 500
     ret
   SetTamanho endp
+
+;muda a velocidade do pac dependendo da tecla q foi apertada
+changePlayerSpeed proc direction:BYTE
+
+    .if direction == D_TOP ; w / seta pra cima
+        mov naveSpeed.y, -6
+        mov naveSpeed.x, 0
+        mov naveDir, D_TOP
+    .elseif direction == D_DOWN ; s / seta pra baixo
+        mov naveSpeed.y, 6
+        mov naveSpeed.x, 0
+        mov naveDir, D_DOWN
+    .elseif direction == D_LEFT ; a / seta pra esquerda
+        mov naveSpeed.x, -6
+        mov naveSpeed.y, 0
+        mov naveDir, D_LEFT
+    .elseif direction == D_RIGHT ; d / seta pra direita
+        mov naveSpeed.x, 6
+        mov naveSpeed.y, 0
+        mov naveDir, D_RIGHT
+    .elseif direction == 5
+        mov lancou, 1
+    .endif
+
+    assume ecx: nothing
+    ret
+changePlayerSpeed endp
+
+;função para o personagem se mover, baseado na velocidade
+movePlayer proc uses eax
+
+    ;invoke willCollide, pac.direction, addr pac.playerObj
+      ;.if edx == FALSE
+        mov eax, navePos.x
+        mov ebx, naveSpeed.x
+        .if bx > 7fh
+          or bx, 65280
+        .endif
+        add eax, ebx
+        mov navePos.x, eax
+        mov eax, navePos.y
+        mov ebx, naveSpeed.y
+        .if bx > 7fh 
+          or bx, 65280
+        .endif
+        add ax, bx
+        mov navePos.y, eax
+        invoke fixCoordinates, addr navePos
+    ;.endif
+    ret
+movePlayer endp
+
+; função principal do jogo 
+jogo proc p:DWORD
+  LOCAL area:RECT
+
+  .while estagio == 0 ;menu (espera o usuário apertar enter)
+    invoke Sleep, 30
+  .endw
+
+  game:
+  .while estagio == 1
+    invoke Sleep, 30
+
+    invoke movePlayer
+  .endw
+
+  .while estagio == 3
+    invoke Sleep, 30
+  .endw
+
+  jmp game
+
+  ret
+jogo endp
 
 ; cria a janela 
   WinMain proc hInst :HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR, CmdShow:DWORD
@@ -174,8 +331,8 @@ paintThread endp
 
         mov clientRect.left, 0
         mov clientRect.top, 0
-        mov clientRect.right, x
-        mov clientRect.bottom, y
+        mov clientRect.right, X
+        mov clientRect.bottom, Y
 
         invoke AdjustWindowRect, addr clientRect, WS_CAPTION, FALSE
 
@@ -184,11 +341,11 @@ paintThread endp
         mov ebx, clientRect.bottom
         sub ebx, clientRect.top
        
-        invoke CreateWindowEx,WS_EX_OVERLAPPEDWINDOW,
+        invoke CreateWindowEx, NULL,
                               ADDR szClassName,
                               ADDR AppName,
-                              WS_OVERLAPPEDWINDOW,
-                              MaxX, MaxY, x, y,
+                              WS_OVERLAPPED or WS_SYSMENU or WS_MINIMIZEBOX,
+                              CW_USEDEFAULT, CW_USEDEFAULT, X, Y,
                               NULL,NULL,
                               hInst,NULL
 
@@ -207,11 +364,19 @@ paintThread endp
 
   WinMain endp
 
-  WndProc proc hWin:HWND, uMsg:UINT, wParam:WPARAM, lParam:LPARAM       
+  WndProc proc hWin:HWND, uMsg:UINT, wParam:WPARAM, lParam:LPARAM      
+    LOCAL direction:BYTE
+    mov direction, -1 
 
     .IF uMsg == WM_CREATE
       invoke SetTamanho
       invoke loadimages
+
+      mov estagio, 1
+
+      mov eax, offset jogo 
+      invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread1ID 
+      invoke CloseHandle, eax 
 
       mov eax, offset paintThread
       invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread2ID
@@ -228,25 +393,26 @@ paintThread endp
     .elseif uMsg == WM_KEYDOWN ;se o usuario apertou alguma tecla
 
       .if (wParam == 77h || wParam == 57h || wParam == VK_UP) ;w ou seta pra cima
-          ;print "cima", 13,10
-          ;mov direction, D_TOP
+          mov direction, D_TOP
 
       .elseif (wParam == 61h || wParam == 41h || wParam == VK_LEFT) ;a ou seta pra esquerda
-          ;print "esquerda", 13,10
-          ;mov direction, D_LEFT
+          mov direction, D_LEFT
 
       .elseif (wParam == 73h || wParam == 53h || wParam == VK_DOWN) ;s ou seta pra baixo
-          ;print "baixo", 13,10
-          ;mov direction, D_DOWN
+          mov direction, D_DOWN
 
-      .elseif (wParam == 64h || wParam == 44h || wParam == VK_RIGHT) ;d ou seta pra direita
-          ;print "direita", 13,10
-          ;mov direction, D_RIGHT
+      .elseif (wParam == 64h || wParam == 44h || wParam == VK_RIGHT) ;d ou seta pra direita          
+          mov direction, D_RIGHT
 
       .elseif (wParam == 20)
-          ;atira
+          mov direction, 5
       .endif
-    .endif
+
+      .if direction != -1
+          invoke changePlayerSpeed, direction
+          mov direction, -1
+      .endif  
+    .endif    
 
     invoke DefWindowProc,hWin,uMsg,wParam,lParam
     ret
