@@ -42,7 +42,31 @@ start:
     mov laser, eax
     ret
 
-  loadimages endp    
+  loadimages endp   
+
+
+;;; Adiciona um laser
+adicionaLaser proc  
+  .if listLaser.qtd == 0      
+    mov eax, player.pos.x 
+    mov listLaser.primeiro.pos1.x, eax
+    mov eax, player.pos.x 
+    mov listLaser.primeiro.pos2.x, eax
+
+    mov eax, player.pos.y
+    mov listLaser.primeiro.pos1.y, eax
+    mov listLaser.primeiro.pos2.y, eax
+  .else
+    ;laser1 laserStr<>
+
+    ;.if listLaser.primeiro.prox == 0
+      
+    ;.endif
+  .endif
+
+  inc listLaser.qtd
+ret
+adicionaLaser endp
 
 
 ;;; pega o tamanho maximo da tela
@@ -87,35 +111,26 @@ estagiosDoJogo proc
   ret
 estagiosDoJogo endp
 
-;;; pinta uma posição qualquer
-  paintPos proc  uses eax _hMemDC:HDC, _hMemDC2:HDC, addrPoint:dword, addrPos:dword
-    assume edx:ptr point
-    assume ecx:ptr point
+;;; desenhar os lasers
+  paintLasers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
+    invoke SelectObject, _hMemDC2, laser
 
-    mov edx, addrPoint
-    mov ecx, addrPos
+    mov ebx, 0
+    ;.while ebx != listLaser.qtd
 
-    mov eax, [ecx].x
-    mov ebx, [ecx].y
-    invoke TransparentBlt, _hMemDC, eax, ebx, [edx].x, [edx].y, _hMemDC2, 0, 0, [edx].x, [edx].y, 16777215
+    inc ebx
+    ;.endw
+    ret
+  paintLasers endp
 
-ret
-paintPos endp
 
-;; pinta o fundo da tela
-  paintbackground proc _hDC:HDC, _hMemDC:HDC, _hMemDC2:HDC
-    invoke SelectObject, _hMemDC2, telaAtual
-    invoke BitBlt, _hMemDC, 0, 0, X, Y, _hMemDC2, 0, 0, SRCCOPY
-  ret
-  paintbackground endp
-  
 ;;; desenha a tela inteira
   paint proc 
     LOCAL hDC:HDC
     LOCAL hMemDC:HDC
     LOCAL hMemDC2:HDC
     LOCAL hBitmap:HDC
- 
+
     invoke BeginPaint, hWnd, ADDR paintstruct
     mov hDC, eax
     invoke CreateCompatibleDC, hDC
@@ -136,12 +151,12 @@ paintPos endp
 
       ; desenha a nave
       invoke SelectObject, hMemDC2, nave
-      invoke TransparentBlt, hDC, navePos.x, navePos.y, NAVE_SIZE.x, NAVE_SIZE.y, hMemDC2, 0, 0, NAVE_SIZE.x, NAVE_SIZE.y, 16777215
+      invoke TransparentBlt, hDC, player.pos.x, player.pos.y, NAVE_SIZE.x, NAVE_SIZE.y, hMemDC2, 0, 0, NAVE_SIZE.x, NAVE_SIZE.y, 16777215
 
-      ; desenha a vida
+      ; desenha as vidas
       invoke SelectObject, hMemDC2, coracao
       mov ebx, 0
-      movzx ecx, naveVida ;guarda quantas vidas ele tem
+      movzx ecx, player.vida ;guarda quantas vidas ele tem
       .while ebx != ecx 
         mov eax, 36
         mul ebx
@@ -151,19 +166,14 @@ paintPos endp
         inc ebx
       .endw 
 
-      ; desenha o laser
-      .if lancou == 1 
+      ; desenha os lasers
+      .if listLaser.qtd != 0
         invoke SelectObject, hMemDC2, laser
-        mov ebx, navePos.x
-        invoke TransparentBlt, hDC, navePos.x, navePos.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215
-        
-        ;mov ebx, navePos.x + 10
-        ;invoke TransparentBlt, hDC, ebx, navePos.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215
-
-
-        mov lancou, 0
+        invoke TransparentBlt, hDC, listLaser.primeiro.pos1.x, listLaser.primeiro.pos1.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
+    
+        invoke TransparentBlt, hDC, listLaser.primeiro.pos2.x, listLaser.primeiro.pos2.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
       .endif
-      
+
     .endif
 
     invoke BitBlt, hDC, 0, 0, MaxX, MaxY, hMemDC, 0, 0, SRCCOPY
@@ -221,36 +231,54 @@ fixCoordinates endp
   TopXY endp
 
   SetTamanho proc
-    mov navePos.x, 370
-    mov navePos.y, 500
+    mov player.pos.x, 370
+    mov player.pos.y, 500
     ret
   SetTamanho endp
 
 ;muda a velocidade do pac dependendo da tecla q foi apertada
-changePlayerSpeed proc direction:BYTE
+changePlayerSpeed proc direction:BYTE, keydown:BYTE
 
+  .if keydown == TRUE
     .if direction == D_TOP ; w / seta pra cima
-        mov naveSpeed.y, -6
-        mov naveSpeed.x, 0
-        mov naveDir, D_TOP
+        mov player.speed.y, -6
+        mov player.speed.x, 0
+        mov player.dir, D_TOP
     .elseif direction == D_DOWN ; s / seta pra baixo
-        mov naveSpeed.y, 6
-        mov naveSpeed.x, 0
-        mov naveDir, D_DOWN
+        mov player.speed.y, 6
+        mov player.speed.x, 0
+        mov player.dir, D_DOWN
     .elseif direction == D_LEFT ; a / seta pra esquerda
-        mov naveSpeed.x, -6
-        mov naveSpeed.y, 0
-        mov naveDir, D_LEFT
+        mov player.speed.x, -6
+        mov player.speed.y, 0
+        mov player.dir, D_LEFT
     .elseif direction == D_RIGHT ; d / seta pra direita
-        mov naveSpeed.x, 6
-        mov naveSpeed.y, 0
-        mov naveDir, D_RIGHT
-    .elseif direction == 5
-        mov lancou, 1
+        mov player.speed.x, 6
+        mov player.speed.y, 0
+        mov player.dir, D_RIGHT
     .endif
-
-    assume ecx: nothing
-    ret
+  .else
+    .if direction == D_TOP ; w / seta pra cima
+        mov player.speed.y, 0
+        mov player.speed.x, 0
+        mov player.dir, D_TOP
+    .elseif direction == D_DOWN ; s / seta pra baixo
+        mov player.speed.y, 0
+        mov player.speed.x, 0
+        mov player.dir, D_DOWN
+    .elseif direction == D_LEFT ; a / seta pra esquerda
+        mov player.speed.x, 0
+        mov player.speed.y, 0
+        mov player.dir, D_LEFT
+    .elseif direction == D_RIGHT ; d / seta pra direita
+        mov player.speed.x, 0
+        mov player.speed.y, 0
+        mov player.dir, D_RIGHT
+    .endif
+  .endif  
+      
+  assume ecx: nothing
+  ret
 changePlayerSpeed endp
 
 ;função para o personagem se mover, baseado na velocidade
@@ -258,21 +286,21 @@ movePlayer proc uses eax
 
     ;invoke willCollide, pac.direction, addr pac.playerObj
       ;.if edx == FALSE
-        mov eax, navePos.x
-        mov ebx, naveSpeed.x
+        mov eax, player.pos.x
+        mov ebx, player.speed.x
         .if bx > 7fh
           or bx, 65280
         .endif
         add eax, ebx
-        mov navePos.x, eax
-        mov eax, navePos.y
-        mov ebx, naveSpeed.y
+        mov player.pos.x, eax
+        mov eax, player.pos.y
+        mov ebx, player.speed.y
         .if bx > 7fh 
           or bx, 65280
         .endif
         add ax, bx
-        mov navePos.y, eax
-        invoke fixCoordinates, addr navePos
+        mov player.pos.y, eax
+        invoke fixCoordinates, addr player.pos
     ;.endif
     ret
 movePlayer endp
@@ -366,7 +394,9 @@ jogo endp
 
   WndProc proc hWin:HWND, uMsg:UINT, wParam:WPARAM, lParam:LPARAM      
     LOCAL direction:BYTE
+    LOCAL keydown:BYTE
     mov direction, -1 
+    mov keydown, -1
 
     .IF uMsg == WM_CREATE
       invoke SetTamanho
@@ -390,27 +420,61 @@ jogo endp
     .elseif uMsg == WM_PAINT
       invoke paint
 
-    .elseif uMsg == WM_KEYDOWN ;se o usuario apertou alguma tecla
-
+    .elseif uMsg == WM_KEYUP 
       .if (wParam == 77h || wParam == 57h || wParam == VK_UP) ;w ou seta pra cima
-          mov direction, D_TOP
+        mov keydown, FALSE
+        mov direction, D_TOP
 
       .elseif (wParam == 61h || wParam == 41h || wParam == VK_LEFT) ;a ou seta pra esquerda
-          mov direction, D_LEFT
+        mov keydown, FALSE
+        mov direction, D_LEFT
 
       .elseif (wParam == 73h || wParam == 53h || wParam == VK_DOWN) ;s ou seta pra baixo
-          mov direction, D_DOWN
+        mov keydown, FALSE
+        mov direction, D_DOWN
 
       .elseif (wParam == 64h || wParam == 44h || wParam == VK_RIGHT) ;d ou seta pra direita          
-          mov direction, D_RIGHT
+        mov keydown, FALSE
+        mov direction, D_RIGHT
 
       .elseif (wParam == 20)
-          mov direction, 5
+        mov keydown, FALSE
+        mov direction, 5
+        invoke adicionaLaser
       .endif
 
       .if direction != -1
-          invoke changePlayerSpeed, direction
-          mov direction, -1
+        mov atirou, 1
+         invoke changePlayerSpeed, direction, keydown
+      .endif  
+
+    .elseif uMsg == WM_KEYDOWN ;se o usuario apertou alguma tecla
+
+      .if (wParam == 77h || wParam == 57h || wParam == VK_UP) ;w ou seta pra cima
+        mov keydown, TRUE
+        mov direction, D_TOP
+
+      .elseif (wParam == 61h || wParam == 41h || wParam == VK_LEFT) ;a ou seta pra esquerda
+        mov keydown, TRUE
+        mov direction, D_LEFT
+
+      .elseif (wParam == 73h || wParam == 53h || wParam == VK_DOWN) ;s ou seta pra baixo
+        mov keydown, TRUE
+        mov direction, D_DOWN
+
+      .elseif (wParam == 64h || wParam == 44h || wParam == VK_RIGHT) ;d ou seta pra direita          
+        mov keydown, TRUE
+        mov direction, D_RIGHT
+
+      .elseif (wParam == 13)
+        mov keydown, TRUE
+        mov direction, 5
+        invoke adicionaLaser
+      .endif
+
+      .if direction != -1
+        mov atirou, 1
+        invoke changePlayerSpeed, direction, keydown
       .endif  
     .endif    
 

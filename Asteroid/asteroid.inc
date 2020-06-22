@@ -31,11 +31,24 @@ point ends
 
 ;atributos que todo objeto tem, serve como uma classe mãe
 
-;nave struct
-    ;imagem dd 0
-    ;navePos point<>
-    ;naveDir byte 0
-;nave ends
+naveStr struct
+  pos point<>
+  dir byte 0
+  speed point<>
+  vida byte 3
+naveStr ends
+
+laserStr struct
+  pos1 point<>
+  pos2 point<>
+  speed point<>
+  prox byte 0
+laserStr ends
+
+lasers struct
+  primeiro laserStr<>
+  qtd byte 0
+lasers ends
 
 
 ;Local macros
@@ -86,17 +99,9 @@ ENDM
     fundoPerdeu dd 0
     fundoRank dd 0
 
-  ;nave
-  navePos point<>
-  NAVE_SIZE_POINT point<30,30>
-  naveDir byte 0
-  naveSpeed point<>
-  naveVida byte 3
-
   ;laser
   lancou byte 0
   
-
   paintstruct        PAINTSTRUCT <>
 
   ; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
@@ -125,6 +130,13 @@ ENDM
 
   ;telas
   estagio byte 0
+
+  ;instancias 
+  player naveStr <<370, 500>, 0, <0, 0>, 3>
+  listLaser lasers< < <0, 0>, <0, 0>, <0, 10>, 0>, 0>
+
+  
+  atirou byte 0
  
   
   posInicial point<600, 100>
@@ -135,5 +147,6 @@ ENDM
     MaxX dd ?
 
     telaAtual dd ?
+
 
 
