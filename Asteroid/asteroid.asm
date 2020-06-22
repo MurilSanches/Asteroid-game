@@ -102,6 +102,22 @@ estagiosDoJogo proc
   ret
 estagiosDoJogo endp
 
+
+; decidade a imagem do meteoro dependendo das condições dele
+decideImagem proc addrMeteoro:DWORD
+  assume ecx:ptr meteoroStr
+
+  mov ecx, addrMeteoro
+  
+  .if [ecx].vida == 2
+    mov edx, meteoro
+  .elseif [ecx].vida == 1
+    mov edx, meteoroQuebrado 
+  .elseif [ecx].vida == 0
+    mov edx, explosao
+  ret
+decideImagem endp
+
 ; desenha a tela inteira
   paint proc 
     LOCAL hDC:HDC
@@ -167,6 +183,11 @@ estagiosDoJogo endp
       ; desenha os meteoros
       .if listMeteoro.qtd == 0
         invoke SelectObject, hMemDC2, meteoro
+
+        invoke decideImagem
+
+        ; Caso o contador da explosao for 1, a imagem da explosao ja foi mostrada, 
+        ; assim não deve-se mostrar novamente, portanto deve remove-lo da lista de meteoros        
 
         invoke TransparentBlt, hDC, 300, 50, METEORO_SIZE.x, METEORO_SIZE.y, hMemDC2, 0, 0, METEORO_SIZE.x, METEORO_SIZE.y, 16777215
         invoke SelectObject, hMemDC2, meteoroQuebrado
@@ -270,15 +291,16 @@ colisaoLaser proc addrLaser:DWORD, addrMeteoro:DWORD
   .if edx == TRUE
     dec [ecx].vida
 
-    ; remover o meteoro da lista ligada caso sua vida seja 0
+    
     ; remover o laser da lista ligada caso acerte o meteoro
+  
   .endif 
 
   invoke isColliding, [ebx].pos2, [ecx].pos, LASER_SIZE, METEORO_SIZE
   .if edx == TRUE
     dec [ecx].vida
-    
-    ; remover o meteoro da lista ligada caso sua vida seja 0
+
+
     ; remover o laser da lista ligada caso acerte o meteoro
 
   .endif 

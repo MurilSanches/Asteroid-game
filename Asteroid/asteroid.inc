@@ -42,6 +42,7 @@ meteoroStr struct
   pos point<>
   speed point<>
   vida byte 2
+  contador byte 0
   prox dd 0
 meteoroStr ends
 
@@ -115,7 +116,6 @@ ENDM
     fundoDoJogo dd 0
     fundoPerdeu dd 0
     fundoRank dd 0
-
     
   paintstruct        PAINTSTRUCT <>
 
