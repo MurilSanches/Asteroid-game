@@ -167,6 +167,7 @@ ENDM
     thread2ID DWORD ?
     thread3ID DWORD ?
     thread4ID DWORD ?
+    thread5ID DWORD ?
     MaxY dd ?
     MaxX dd ?
 

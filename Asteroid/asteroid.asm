@@ -115,6 +115,7 @@ decideImagem proc addrMeteoro:DWORD
     mov edx, meteoroQuebrado 
   .elseif [ecx].vida == 0
     mov edx, explosao
+  .endif
   ret
 decideImagem endp
 
@@ -182,13 +183,12 @@ decideImagem endp
 
       ; desenha os meteoros
       .if listMeteoro.qtd == 0
-        invoke SelectObject, hMemDC2, meteoro
+        invoke decideImagem, addr meteoro0
 
-        invoke decideImagem
 
         ; Caso o contador da explosao for 1, a imagem da explosao ja foi mostrada, 
         ; assim não deve-se mostrar novamente, portanto deve remove-lo da lista de meteoros        
-
+        invoke SelectObject, hMemDC2, meteoro
         invoke TransparentBlt, hDC, 300, 50, METEORO_SIZE.x, METEORO_SIZE.y, hMemDC2, 0, 0, METEORO_SIZE.x, METEORO_SIZE.y, 16777215
         invoke SelectObject, hMemDC2, meteoroQuebrado
         invoke TransparentBlt, hDC, 400, 50, METEORO_SIZE.x, METEORO_SIZE.y, hMemDC2, 0, 0, METEORO_SIZE.x, METEORO_SIZE.y, 16777215
@@ -291,7 +291,6 @@ colisaoLaser proc addrLaser:DWORD, addrMeteoro:DWORD
   .if edx == TRUE
     dec [ecx].vida
 
-    
     ; remover o laser da lista ligada caso acerte o meteoro
   
   .endif 
@@ -299,7 +298,6 @@ colisaoLaser proc addrLaser:DWORD, addrMeteoro:DWORD
   invoke isColliding, [ebx].pos2, [ecx].pos, LASER_SIZE, METEORO_SIZE
   .if edx == TRUE
     dec [ecx].vida
-
 
     ; remover o laser da lista ligada caso acerte o meteoro
 
@@ -542,7 +540,7 @@ jogo proc p:DWORD
 
     ; verifica se bateu nos meteoros
 
-    ; verifica se os lasers barem nos meteoros
+    ; verifica se os lasers bateram nos meteoros
 
     ; chama a funcao para mover a nave
     invoke movePlayer
@@ -648,6 +646,18 @@ contagemPontuacao proc p:DWORD
   ret
 contagemPontuacao endp
 
+tocaMusica proc  p:DWORD
+  .while !over
+   mov   open_lpstrElementName,OFFSET musicaDeFundo
+   mov   open_lpstrDeviceType, 0h
+   invoke mciSendCommandA,0,MCI_OPEN, MCI_OPEN_ELEMENT,offset open_dwCallback 
+   invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_FROM or MCI_NOTIFY,offset play_dwCallback
+   invoke Sleep, 186000
+  .endw
+  invoke mciSendCommandA,open_wDeviceID,MCI_CLOSE,0,offset generic_dwCallback
+  ret
+tocaMusica endp
+
 ; cria a janela 
   WinMain proc hInst :HINSTANCE,hPrevInst:HINSTANCE,CmdLine:LPSTR, CmdShow:DWORD
         LOCAL clientRect:RECT
@@ -734,8 +744,12 @@ contagemPontuacao endp
       invoke CloseHandle, eax
 
       mov eax, offset invocar
-      invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread3ID
+      invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread4ID
       invoke CloseHandle, eax 
+
+      mov eax, offset tocaMusica
+      invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread5ID
+      invoke CloseHandle, eax
 
     ; após fechar o app
     .elseif uMsg == WM_DESTROY
