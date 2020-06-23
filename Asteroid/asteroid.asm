@@ -119,6 +119,24 @@ decideImagem proc addrMeteoro:DWORD
   ret
 decideImagem endp
 
+; funcao toca musica laser
+tocaMusicaLaser proc
+  mov   open_lpstrElementName,OFFSET musicaTiro
+  mov   open_lpstrDeviceType, 0h
+  invoke mciSendCommandA,0,MCI_OPEN, MCI_OPEN_ELEMENT,offset open_dwCallback 
+  invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_FROM or MCI_NOTIFY,offset play_dwCallback
+  ret
+tocaMusicaLaser endp
+
+; funcao toca musica laser
+tocaMusicaExplosao proc
+  mov   open_lpstrElementName,OFFSET musicaExplosao
+  mov   open_lpstrDeviceType, 0h
+  invoke mciSendCommandA,0,MCI_OPEN, MCI_OPEN_ELEMENT,offset open_dwCallback 
+  invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_FROM or MCI_NOTIFY,offset play_dwCallback
+  ret
+tocaMusicaExplosao endp
+
 ; desenha a tela inteira
   paint proc 
     LOCAL hDC:HDC
@@ -291,6 +309,9 @@ colisaoLaser proc addrLaser:DWORD, addrMeteoro:DWORD
   .if edx == TRUE
     dec [ecx].vida
 
+    .if [ecx].vida == 0
+      invoke tocaMusicaExplosao
+    .endif
     ; remover o laser da lista ligada caso acerte o meteoro
   
   .endif 
@@ -299,6 +320,10 @@ colisaoLaser proc addrLaser:DWORD, addrMeteoro:DWORD
   .if edx == TRUE
     dec [ecx].vida
 
+    .if [ecx].vida == 0
+      invoke tocaMusicaExplosao
+    .endif
+    
     ; remover o laser da lista ligada caso acerte o meteoro
 
   .endif 
@@ -784,12 +809,13 @@ tocaMusica endp
       .elseif (wParam == 46h)
         mov keydown, TRUE
         mov direction, 5
-        invoke adicionaLaser 
+        invoke tocaMusicaLaser
+        ;invoke adicionaLaser 
       .endif
 
       .if direction != -1
         mov atirou, 1
-         invoke changePlayerSpeed, direction, keydown
+        invoke changePlayerSpeed, direction, keydown
       .endif  
   
 
@@ -819,7 +845,8 @@ tocaMusica endp
       .elseif (wParam == 46h)
         mov keydown, TRUE
         mov direction, 5
-        invoke adicionaLaser  
+        ;invoke adicionaLaser  
+        invoke tocaMusicaLaser
       .endif
 
       .if direction != -1
