@@ -323,7 +323,6 @@ colisaoLaser proc addrLaser:DWORD, addrMeteoro:DWORD
     .if [ecx].vida == 0
       invoke tocaMusicaExplosao
     .endif
-    
     ; remover o laser da lista ligada caso acerte o meteoro
 
   .endif 
@@ -809,7 +808,7 @@ tocaMusica endp
       .elseif (wParam == 46h)
         mov keydown, TRUE
         mov direction, 5
-        invoke tocaMusicaLaser
+        invoke tocaMusicaExplosao
         ;invoke adicionaLaser 
       .endif
 
