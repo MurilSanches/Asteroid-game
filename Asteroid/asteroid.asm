@@ -14,8 +14,6 @@ include asteroid.inc
 .CODE
 
 start:  
-    ;invoke  uFMOD_PlaySong, musicaDeFundo, 0, XM_FILE
-
     invoke GetModuleHandle, NULL ; provides the instance handle
     mov hInstance, eax
 
@@ -300,7 +298,7 @@ hitMeteoro endp
 
 ; verifica se o laser acertou em um meteoro e faz o meteoro perder vida ou ser destruido
 colisaoLaser proc addrLaser:DWORD, addrMeteoro:DWORD
-  assume ebx:ptr laserStr
+  assume ebx:ptr laserDuplo
   assume ecx:ptr meteoroStr
 
   mov ebx, addrLaser
@@ -460,7 +458,7 @@ moveMeteoros endp
 
 ; funcao para mover os lasers
 moveLasers proc uses eax, addrLaser:DWORD
-assume edx:ptr laserStr
+assume edx:ptr laserDuplo
 mov edx, addrLaser
 
   mov eax, [edx].pos1.x
@@ -537,7 +535,7 @@ invocarMeteoros endp
 ; Adiciona um laser
 adicionaLaser proc  
   .if listLaser.qtd == 0      
-    laser1 laserStr<>
+    laser1 laserDuplo<>
     mov listLaser.primeiro, OFFSET laser1
   .else
     mov contador, 0
@@ -550,6 +548,19 @@ adicionaLaser proc
   ret
 adicionaLaser endp
 
+runThread proc 
+  
+  mov eax, offset contagemPontuacao
+  invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread3ID
+  invoke CloseHandle, eax
+
+  mov eax, offset invocar
+  invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread4ID
+  invoke CloseHandle, eax
+  ret
+runThread endp
+
+
 ; função principal do jogo 
 jogo proc p:DWORD
   LOCAL area:RECT
@@ -559,6 +570,9 @@ jogo proc p:DWORD
   .endw
 
   game:
+  .if estagio == 1
+    invoke runThread
+  .endif
   .while estagio == 1
     invoke Sleep, 30
 
@@ -572,7 +586,7 @@ jogo proc p:DWORD
     ; mover os lasers
     mov contador, 0
     push eax
-    assume eax:ptr laserStr
+    assume eax:ptr laserDuplo
     mov eax, offset listLaser.primeiro
 
     ;.while contador != listLaser.qtd
@@ -653,7 +667,6 @@ invocar proc p:DWORD
   jmp invoca
   ret
 invocar endp
-
 
 ; funcao para a contagem de pontos
 contagemPontuacao proc p:DWORD
@@ -763,14 +776,6 @@ tocaMusica endp
       invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread2ID
       invoke CloseHandle, eax
 
-      mov eax, offset contagemPontuacao
-      invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread3ID
-      invoke CloseHandle, eax
-
-      mov eax, offset invocar
-      invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread4ID
-      invoke CloseHandle, eax 
-
       mov eax, offset tocaMusica
       invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread5ID
       invoke CloseHandle, eax
@@ -785,20 +790,28 @@ tocaMusica endp
 
     .elseif uMsg == WM_KEYUP 
       .if (wParam == 77h || wParam == 57h || wParam == VK_UP) ;w ou seta pra cima
-        mov keydown, FALSE
-        mov direction, D_TOP
+        .if estagio == 1
+          mov keydown, FALSE
+          mov direction, D_TOP
+        .endif
 
       .elseif (wParam == 61h || wParam == 41h || wParam == VK_LEFT) ;a ou seta pra esquerda
-        mov keydown, FALSE
-        mov direction, D_LEFT
+        .if estagio == 1
+          mov keydown, FALSE
+          mov direction, D_LEFT
+        .endif
 
       .elseif (wParam == 73h || wParam == 53h || wParam == VK_DOWN) ;s ou seta pra baixo
-        mov keydown, FALSE
-        mov direction, D_DOWN
+        .if estagio == 1
+          mov keydown, FALSE
+          mov direction, D_DOWN
+        .endif 
 
       .elseif (wParam == 64h || wParam == 44h || wParam == VK_RIGHT) ;d ou seta pra direita          
-        mov keydown, FALSE
-        mov direction, D_RIGHT
+        .if estagio == 1
+          mov keydown, FALSE
+          mov direction, D_RIGHT
+        .endif
 
       .elseif (wParam == 13)
         .if estagio == 0 || estagio == 2 || estagio == 3
@@ -806,35 +819,47 @@ tocaMusica endp
         .endif      
 
       .elseif (wParam == 46h)
-        mov keydown, TRUE
-        mov direction, 5
-        invoke tocaMusicaExplosao
-        ;invoke adicionaLaser 
+        .if estagio == 1
+          mov keydown, TRUE
+          mov direction, 5
+          invoke tocaMusicaLaser
+          ;invoke adicionaLaser 
+        .endif 
       .endif
-
-      .if direction != -1
-        mov atirou, 1
-        invoke changePlayerSpeed, direction, keydown
-      .endif  
+      
+      .if estagio == 1
+        .if direction != -1
+          mov atirou, 1
+          invoke changePlayerSpeed, direction, keydown
+        .endif 
+      .endif 
   
 
     .elseif uMsg == WM_KEYDOWN ;se o usuario apertou alguma tecla
 
       .if (wParam == 77h || wParam == 57h || wParam == VK_UP) ;w ou seta pra cima
-        mov keydown, TRUE
-        mov direction, D_TOP
+        .if estagio == 1
+          mov keydown, TRUE
+          mov direction, D_TOP
+        .endif
 
       .elseif (wParam == 61h || wParam == 41h || wParam == VK_LEFT) ;a ou seta pra esquerda
-        mov keydown, TRUE
-        mov direction, D_LEFT
+        .if estagio == 1
+          mov keydown, TRUE
+          mov direction, D_LEFT
+        .endif
 
       .elseif (wParam == 73h || wParam == 53h || wParam == VK_DOWN) ;s ou seta pra baixo
-        mov keydown, TRUE
-        mov direction, D_DOWN
+        .if estagio == 1
+          mov keydown, TRUE
+          mov direction, D_DOWN
+        .endif
 
       .elseif (wParam == 64h || wParam == 44h || wParam == VK_RIGHT) ;d ou seta pra direita          
-        mov keydown, TRUE
-        mov direction, D_RIGHT
+        .if estagio == 1
+          mov keydown, TRUE
+          mov direction, D_RIGHT
+        .endif
 
       .elseif (wParam == 13)
         .if estagio == 0 || estagio == 2 || estagio == 3
@@ -842,16 +867,20 @@ tocaMusica endp
         .endif      
 
       .elseif (wParam == 46h)
-        mov keydown, TRUE
-        mov direction, 5
-        ;invoke adicionaLaser  
-        invoke tocaMusicaLaser
+        .if estagio == 1
+          mov keydown, TRUE
+          mov direction, 5
+          ;invoke adicionaLaser  
+          invoke tocaMusicaLaser
+        .endif
       .endif
 
-      .if direction != -1
-        mov atirou, 1
-        invoke changePlayerSpeed, direction, keydown
-      .endif  
+      .if estagio == 1
+        .if direction != -1
+          mov atirou, 1
+          invoke changePlayerSpeed, direction, keydown
+        .endif 
+      .endif 
     .endif    
 
     invoke DefWindowProc,hWin,uMsg,wParam,lParam

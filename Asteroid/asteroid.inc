@@ -51,12 +51,12 @@ meteoros struct
   qtd byte 0
 meteoros ends
 
-laserStr struct
+laserDuplo struct
   pos1 point<>
   pos2 point<>
   speed point<>
   prox dd 0
-laserStr ends
+laserDuplo ends
 
 lasers struct
   primeiro dd 0
@@ -152,7 +152,7 @@ ENDM
   listMeteoro meteoros<OFFSET meteoro0, 0>
 
   meteoro0 meteoroStr<>
-  laser0 laserStr<>
+  laser0 laserDuplo<>
 
   pont db "Pontuacao: ", 0
   
