@@ -102,6 +102,9 @@ ENDM
   EXPLOSAO_SIZE point<25, 25>
   METEORO_SIZE point<23, 20>
 
+  ;speed 
+  LASER_SPEED point<0, -6>
+
 .DATA
   ; imagens
     nave dd 0

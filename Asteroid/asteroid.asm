@@ -184,32 +184,45 @@ tocaMusicaExplosao endp
       .endw 
 
       ; desenha os lasers
-      .if listLaser.qtd == 0
+      .if listLaser.qtd != 0
         invoke SelectObject, hMemDC2, laser
 
-        mov eax, player.pos.x
-        mov ebx, 1
-        add ebx, eax
-        invoke TransparentBlt, hDC, ebx, player.pos.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
-        mov eax, player.pos.x
-        mov ebx, 31
-        add ebx, eax
-        invoke TransparentBlt, hDC, ebx, player.pos.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
-      .endif
+        assume eax:ptr laserDuplo
+       mov eax, listLaser.primeiro
+        loop1:
+          invoke TransparentBlt, hDC, [eax].pos1.x, [eax].pos1.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
+          invoke TransparentBlt, hDC, [eax].pos2.x, [eax].pos2.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
+          .if [eax].prox == 0
+            jmp fim1
+          .else
+            mov eax, [eax].prox
+            jmp loop1
+          .endif
+        fim1:
+
+        .endif
 
       ; desenha os meteoros
-      .if listMeteoro.qtd == 0
-        invoke decideImagem, addr meteoro0
+      .if listMeteoro.qtd != 0
 
+        assume eax:ptr meteoroStr
+        mov eax, listMeteoro.primeiro
+        loop2:
+          invoke decideImagem, addr meteoro0
+          invoke SelectObject, hMemDC2, edx
+          invoke TransparentBlt, hDC, [eax].pos.x, [eax].pos.y, METEORO_SIZE.x, METEORO_SIZE.y, hMemDC2, 0, 0, METEORO_SIZE.x, METEORO_SIZE.y, 16777215
 
+        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ; Caso o contador da explosao for 1, a imagem da explosao ja foi mostrada, 
-        ; assim não deve-se mostrar novamente, portanto deve remove-lo da lista de meteoros        
-        invoke SelectObject, hMemDC2, meteoro
-        invoke TransparentBlt, hDC, 300, 50, METEORO_SIZE.x, METEORO_SIZE.y, hMemDC2, 0, 0, METEORO_SIZE.x, METEORO_SIZE.y, 16777215
-        invoke SelectObject, hMemDC2, meteoroQuebrado
-        invoke TransparentBlt, hDC, 400, 50, METEORO_SIZE.x, METEORO_SIZE.y, hMemDC2, 0, 0, METEORO_SIZE.x, METEORO_SIZE.y, 16777215
-        invoke SelectObject, hMemDC2, explosao
-        invoke TransparentBlt, hDC, 500, 50, EXPLOSAO_SIZE.x, EXPLOSAO_SIZE.y, hMemDC2, 0, 0, EXPLOSAO_SIZE.x, EXPLOSAO_SIZE.y, 16777215
+        ; assim não deve-se mostrar novamente, portanto deve remove-lo da lista de meteoros  
+
+          .if [eax].prox == 0
+            jmp fim2
+          .else
+            mov eax, [eax].prox
+            jmp loop2 
+          .endif 
+        fim2:      
       .endif
 
     .endif
@@ -495,56 +508,91 @@ moveLasers endp
 
 ; função para o personagem se mover, baseado na velocidade
 movePlayer proc uses eax
-
-    ;invoke willCollide, pac.direction, addr pac.playerObj
-      ;.if edx == FALSE
-        mov eax, player.pos.x
-        mov ebx, player.speed.x
-        .if bx > 7fh
-          or bx, 65280
-        .endif
-        add eax, ebx
-        mov player.pos.x, eax
-        mov eax, player.pos.y
-        mov ebx, player.speed.y
-        .if bx > 7fh 
-          or bx, 65280
-        .endif
-        add ax, bx
-        mov player.pos.y, eax
-        invoke fixCoordinates, addr player.pos
-    ;.endif
-    ret
+  mov eax, player.pos.x
+  mov ebx, player.speed.x
+  .if bx > 7fh
+    or bx, 65280
+  .endif
+  add eax, ebx
+  mov player.pos.x, eax
+  mov eax, player.pos.y
+  mov ebx, player.speed.y
+  .if bx > 7fh 
+    or bx, 65280
+  .endif
+  add ax, bx
+  mov player.pos.y, eax
+  invoke fixCoordinates, addr player.pos
+  ret
 movePlayer endp
 
 ; funcao que invoca os meteoros com o tempo
 invocarMeteoros proc
+
+  invoke randomizer
+
+  ;;;;;;; NÂO CONSIGO INSTANCIAR NOVAS STRUCTS AQUI
+
+  ;meteoro1 meteoroStr<>
+
   .if listMeteoro.qtd == 0
-    invoke randomizer
-    ;meteoro1 meteoroStr<>
-    ;mov listMeteoro.primeiro, OFFSET meteoro1
+    mov listMeteoro.primeiro, OFFSET meteoro0
   .else
-    mov contador, 0
-    ;.while contador != listMeteoro.qtd
-      add contador, 1
-    ;.endw
+    assume eax:ptr meteoroStr
+    mov eax, listMeteoro.primeiro
+    loop1:
+      .if [eax].prox == 0
+        mov [eax].prox, offset meteoro0
+        jmp fim
+      .endif
+
+      mov eax, [eax].prox
+      jmp loop1
+    fim:
   .endif
+  ;add listMeteoro.qtd, 1
   ret
 invocarMeteoros endp
 
 ; Adiciona um laser
 adicionaLaser proc  
+
+  mov eax, player.pos.x
+  mov ebx, 1
+  add ebx, eax
+  mov ecx, 31
+  add ecx, eax
+
+  ;;;;;;; NÂO CONSIGO INSTANCIAR NOVAS STRUCTS AQUI
+
+  ;laser1 laserDuplo<>
+  ;laser1 laserDuplo<<ebx, player.pos.y>, <ecx, player.pos.y>, <0, -6>, 0>
+  ;mov laser1.pos1.x, ebx
+  ;mov laser1.pos1.y, offset player.pos.y
+  ;mov laser1.pos2.x, ecx
+  ;mov laser1.pos2.y, offset player.pos.y
+  ;mov laser1.speed.x, offset LASER_SPEED.x
+  ;mov laser1.speed.y, offset LASER_SPEED.y
+  ;mov laser1.prox, 0
+
   .if listLaser.qtd == 0      
-    laser1 laserDuplo<>
-    mov listLaser.primeiro, OFFSET laser1
+    mov listLaser.primeiro, OFFSET laser0
   .else
-    mov contador, 0
-    ;.while contador != listLaser.qtd 
-      add contador, 1
-    ;.endw
+    assume eax:ptr laserDuplo
+    mov eax, listLaser.primeiro
+    loop1:
+      .if [eax].prox == 0
+        mov [eax].prox, OFFSET laser0
+        jmp fim
+      .endif
+
+      mov eax, [eax].prox
+      jmp loop1
+    fim:
+    assume eax:nothing
   .endif
 
-  add listLaser.qtd, 1
+  ;add listLaser.qtd, 1
   ret
 adicionaLaser endp
 
@@ -577,56 +625,82 @@ jogo proc p:DWORD
     invoke Sleep, 30
 
     ; verifica se bateu nos meteoros
+    assume eax:ptr meteoroStr
+    mov eax, listMeteoro.primeiro
+    loop1:
+      invoke hitMeteoro, addr [eax]
+      .if [eax].prox != 0
+        mov eax, [eax].prox
+        jmp loop1
+      .endif
+        jmp fim1
+      fim1:
+    assume eax:nothing  
 
     ; verifica se os lasers bateram nos meteoros
+    assume eax:ptr meteoroStr
+    assume ebx:ptr laserDuplo
+    mov eax, listMeteoro.primeiro
+    mov ebx, listLaser.primeiro
+
+    loop2:
+      loop3:
+        invoke colisaoLaser, addr [ebx], addr [eax]
+        .if [eax].prox != 0
+          mov eax, [eax].prox
+          jmp loop3
+        .endif
+          jmp fim3
+        fim3:
+      .if [ebx].prox != 0
+        mov ebx, [ebx].prox
+        jmp loop2
+      .endif
+        jmp fim2
+      fim2:    
 
     ; chama a funcao para mover a nave
     invoke movePlayer
     
     ; mover os lasers
-    mov contador, 0
-    push eax
-    assume eax:ptr laserDuplo
-    mov eax, offset listLaser.primeiro
+    .if listLaser.qtd != 0
+      assume eax:ptr laserDuplo
+      mov eax, offset listLaser.primeiro
 
-    ;.while contador != listLaser.qtd
-      invoke moveLasers, addr [eax]
-      add contador, 1
-      .if [eax].prox != 0
-        mov eax, [eax].prox
-      .else
-        mov ebx, offset listLaser.qtd
-        mov contador, ebx
-      .endif
-    ;.endw  
-    assume eax:nothing
-    pop eax
+      loop4:
+        invoke moveLasers, addr [eax]
+        .if [eax].prox != 0
+          mov eax, [eax].prox
+          jmp loop4
+        .else
+          jmp fim4
+        .endif
+      fim4:
+      assume eax:nothing
+    .endif
 
     ; mover os meteoros
-    mov contador, 0
-    push eax
-    assume eax:ptr meteoroStr    
-    mov eax, offset listMeteoro.primeiro
-
-    ;.while contador != listLaser.qtd
-      invoke moveMeteoros, addr [eax]
-      add contador, 1    
-      .if [eax].prox != 0
-        mov eax, [eax].prox 
-      .else
-        mov ebx, offset listMeteoro.qtd
-        mov contador, ebx
-      .endif
-    ;.endw
-    assume eax:nothing
-    pop eax
+    .if listMeteoro.qtd != 0
+      assume eax:ptr meteoroStr    
+      mov eax, offset listMeteoro.primeiro
+      loop5:
+        invoke moveMeteoros, addr [eax] 
+        .if [eax].prox != 0
+          mov eax, [eax].prox 
+          jmp loop5
+        .else
+          jmp fim5
+        .endif
+      fim5:
+      assume eax:nothing
+    .endif
   .endw
 
   .while estagio == 3
     invoke Sleep, 30
   .endw
+  
   jmp game
-
   ret
 jogo endp
 
@@ -823,7 +897,7 @@ tocaMusica endp
           mov keydown, TRUE
           mov direction, 5
           invoke tocaMusicaLaser
-          ;invoke adicionaLaser 
+          invoke adicionaLaser 
         .endif 
       .endif
       
@@ -870,7 +944,7 @@ tocaMusica endp
         .if estagio == 1
           mov keydown, TRUE
           mov direction, 5
-          ;invoke adicionaLaser  
+          invoke adicionaLaser  
           invoke tocaMusicaLaser
         .endif
       .endif
