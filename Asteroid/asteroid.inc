@@ -1,3 +1,5 @@
+; Desenvolvido por João Augusto - 18185  e Murilo Sanches - 18187
+
 ;include files
 include \masm32\include\windows.inc
 

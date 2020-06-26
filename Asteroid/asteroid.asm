@@ -1,4 +1,6 @@
-; Todas as funções do jogo estão implementadas corretamente, 
+; Desenvolvido por João Augusto - 18185  e Murilo Sanches - 18187
+;
+;Todas as funções do jogo estão implementadas corretamente, 
 ; porém deram alguns problemas:
 ;
 ; Problema 1: não encontrarmos uma forma simples de fazer uma lista ligada com os meteoros e lasers, 
@@ -15,7 +17,7 @@
 ;
 ; Problema 4: não conseguiamos testar o fim do jogo por não ter como perder, 
 ;             porém implementamos todos os códigos e caso conseguissemos solucionar o problema 1, poderiamos testar
-;             e acredito eu que estaria tudo funcionando corretamente
+;             e acredito eu que estaria tudo funcionando corretamente.  
 ;
 
 .386                   
