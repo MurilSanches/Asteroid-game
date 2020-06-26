@@ -123,15 +123,15 @@ estagiosDoJogo endp
 
 ; decidade a imagem do meteoro dependendo das condições dele
 decideImagem proc addrMeteoro:DWORD
-  assume ecx:ptr meteoroStr
+  assume ebx:ptr meteoroStr
 
-  mov ecx, addrMeteoro
+  mov ebx, addrMeteoro
   
-  .if [ecx].vida == 2
+  .if [ebx].vida == 2
     mov edx, meteoro
-  .elseif [ecx].vida == 1
+  .elseif [ebx].vida == 1
     mov edx, meteoroQuebrado 
-  .elseif [ecx].vida == 0
+  .elseif [ebx].vida == 0
     mov edx, explosao
   .endif
   ret
@@ -207,15 +207,15 @@ tocaMusicaExplosao endp
       .if listLaser.qtd == 30
         invoke SelectObject, hMemDC2, laser
 
-          assume eax:ptr laserDuplo
-          mov eax, offset listLaser.primeiro
+          assume ebx:ptr laserDuplo
+          mov ebx, offset listLaser.primeiro
             loop1:
-              invoke TransparentBlt, hDC, [eax].pos1.x, [eax].pos1.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
-              invoke TransparentBlt, hDC, [eax].pos2.x, [eax].pos2.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
-              .if [eax].prox == 0
+              invoke TransparentBlt, hDC, [ebx].pos1.x, [ebx].pos1.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
+              invoke TransparentBlt, hDC, [ebx].pos2.x, [ebx].pos2.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
+              .if [ebx].prox == 0
                 jmp fim1
               .else
-                mov eax, [eax].prox
+                mov ebx, [ebx].prox
                 jmp loop1
               .endif
           fim1:
@@ -224,21 +224,21 @@ tocaMusicaExplosao endp
       ; desenha os meteoros
       .if listMeteoro.qtd != 0
 
-        assume eax:ptr meteoroStr
-        mov eax, listMeteoro.primeiro
+        assume ebx:ptr meteoroStr
+        mov ebx, listMeteoro.primeiro
         loop2:
           invoke decideImagem, addr meteoro0
           invoke SelectObject, hMemDC2, edx
-          invoke TransparentBlt, hDC, [eax].pos.x, [eax].pos.y, METEORO_SIZE.x, METEORO_SIZE.y, hMemDC2, 0, 0, METEORO_SIZE.x, METEORO_SIZE.y, 16777215
+          invoke TransparentBlt, hDC, [ebx].pos.x, [ebx].pos.y, METEORO_SIZE.x, METEORO_SIZE.y, hMemDC2, 0, 0, METEORO_SIZE.x, METEORO_SIZE.y, 16777215
 
         ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ; Caso o contador da explosao for 1, a imagem da explosao ja foi mostrada, 
         ; assim não deve-se mostrar novamente, portanto deve remove-lo da lista de meteoros  
 
-          .if [eax].prox == 0
+          .if [ebx].prox == 0
             jmp fim2
           .else
-            mov eax, [eax].prox
+            mov ebx, [ebx].prox
             jmp loop2 
           .endif 
         fim2:      
@@ -311,10 +311,10 @@ isColliding endp
 
 ; verifica se o jogador bateu em um meteoro e faz ele morrer ou perder vida
 hitMeteoro proc addrMeteoro:DWORD
-  assume ecx:ptr meteoroStr
+  assume ebx:ptr meteoroStr
 
-  mov ecx, meteoroStr
-  invoke isColliding, player.pos, [ecx].pos, NAVE_SIZE, METEORO_SIZE
+  mov ebx, meteoroStr
+  invoke isColliding, player.pos, [ebx].pos, NAVE_SIZE, METEORO_SIZE
   .if edx == TRUE
     dec player.vida
     .if player.vida == 0
@@ -324,7 +324,7 @@ hitMeteoro proc addrMeteoro:DWORD
     .endif 
   .endif
 
-  assume ecx:nothing
+  assume ebx:nothing
   ret
 hitMeteoro endp
 
@@ -376,22 +376,22 @@ paintThread endp
 
 ;função para um objeto n sair da tela, mas sim voltar pelo outro lado
 fixCoordinates proc addrObj:dword
-assume eax:ptr point
-    mov eax, addrObj
+assume ebx:ptr point
+    mov ebx, addrObj
 
-    .if [eax].x > 800 && [eax].x < 80000000h
-        mov [eax].x, 20
+    .if [ebx].x > 800 && [ebx].x < 80000000h
+        mov [ebx].x, 20
     .endif
-    .if [eax].x <= 10 || [eax].x > 80000000h
-        mov [eax].x, 780
+    .if [ebx].x <= 10 || [ebx].x > 80000000h
+        mov [ebx].x, 780
     .endif 
-    .if [eax].y > 520 && [eax].y < 80000000h
-        mov [eax].y, 520
+    .if [ebx].y > 520 && [ebx].y < 80000000h
+        mov [ebx].y, 520
     .endif
-    .if [eax].y <= 10 || [eax].y > 80000000h
-        mov [eax].y, 10 
+    .if [ebx].y <= 10 || [ebx].y > 80000000h
+        mov [ebx].y, 10 
     .endif
-assume eax:nothing
+assume ebx:nothing
 ret
 fixCoordinates endp
 
@@ -467,61 +467,61 @@ randomizer endp
 
 ; funcao para mover os meteoros 
 moveMeteoros proc uses eax, addrMeteoro:DWORD
-assume edx:ptr meteoroStr
-  mov edx, addrMeteoro
-  .if [edx].vida != 0
-    mov eax, [edx].pos.x
-    mov ebx, [edx].speed.x
-    .if bx > 7fh
-      or bx, 65280
+assume ebx:ptr meteoroStr
+  mov ebx, addrMeteoro
+  .if [ebx].vida != 0
+    mov eax, [ebx].pos.x
+    mov edx, [ebx].speed.x
+    .if dx > 7fh
+      or dx, 65280
     .endif
-    add eax, ebx
-    mov [edx].pos.x, eax
-    mov eax, [edx].pos.y
-    mov ebx, [edx].speed.y
-    .if bx > 7fh 
-      or bx, 65280
+    add eax, edx
+    mov [ebx].pos.x, eax
+    mov eax, [ebx].pos.y
+    mov edx, [ebx].speed.y
+    .if dx > 7fh 
+      or dx, 65280
     .endif
-    add ax, bx
-    mov [edx].pos.y, eax   
+    add ax, dx
+    mov [ebx].pos.y, eax   
   .endif     
   ret
 moveMeteoros endp
 
 ; funcao para mover os lasers
 moveLasers proc uses eax, addrLaser:DWORD
-assume edx:ptr laserDuplo
-mov edx, addrLaser
+assume ebx:ptr laserDuplo
+mov ebx, addrLaser
 
-  mov eax, [edx].pos1.x
-  mov ebx, [edx].speed.x
-  .if bx > 7fh
-    or bx, 65280
+  mov eax, [ebx].pos1.x
+  mov edx, [ebx].speed.x
+  .if dx > 7fh
+    or dx, 65280
   .endif
   add eax, ebx
-  mov [edx].pos1.x, eax
-  mov eax, [edx].pos1.y
-  mov ebx, [edx].speed.y
-  .if bx > 7fh 
-    or bx, 65280
+  mov [ebx].pos1.x, eax
+  mov eax, [ebx].pos1.y
+  mov edx, [ebx].speed.y
+  .if dx > 7fh 
+    or dx, 65280
   .endif
-  add ax, bx
-  mov [edx].pos1.y, eax
+  add ax, dx
+  mov [ebx].pos1.y, eax
 
-  mov eax, [edx].pos2.x
-  mov ebx, [edx].speed.x
-  .if bx > 7fh
-    or bx, 65280
+  mov eax, [ebx].pos2.x
+  mov edx, [ebx].speed.x
+  .if dx > 7fh
+    or dx, 65280
   .endif
-  add eax, ebx
-  mov [edx].pos2.x, eax
-  mov eax, [edx].pos2.y
-  mov ebx, [edx].speed.y
-  .if bx > 7fh 
-    or bx, 65280
+  add eax, edx
+  mov [ebx].pos2.x, eax
+  mov eax, [ebx].pos2.y
+  mov edx, [ebx].speed.y
+  .if dx > 7fh 
+    or dx, 65280
   .endif
-  add ax, bx
-  mov [edx].pos2.y, eax
+  add ax, dx
+  mov [ebx].pos2.y, eax
   ret
 moveLasers endp
 
@@ -546,109 +546,108 @@ movePlayer proc uses eax
 movePlayer endp
 
 retMeteoro proc addrPos:DWORD
-  mov eax, addrPos
-  assume edx:ptr meteoroStr
+  assume ebx:ptr meteoroStr
 
   .if (addrPos == 0)
-    mov edx, offset meteoro1
+    mov ebx, offset meteoro1
   .elseif (addrPos == 1)
-    mov edx, offset meteoro2
+    mov ebx, offset meteoro2
   .elseif (addrPos == 2)
-    mov edx, offset meteoro3
+    mov ebx, offset meteoro3
   .elseif (addrPos == 3)
-    mov edx, offset meteoro4
+    mov ebx, offset meteoro4
   .elseif (addrPos == 4)
-    mov edx, offset meteoro5
+    mov ebx, offset meteoro5
   .elseif (addrPos == 5)
-    mov edx, offset meteoro6
+    mov ebx, offset meteoro6
   .elseif (addrPos == 6)
-    mov edx, offset meteoro7
+    mov ebx, offset meteoro7
   .elseif (addrPos == 7)
-    mov edx, offset meteoro8
+    mov ebx, offset meteoro8
   .elseif (addrPos == 8)
-    mov edx, offset meteoro9
+    mov ebx, offset meteoro9
   .elseif (addrPos == 9)
-    mov edx, offset meteoro10
+    mov ebx, offset meteoro10
   .elseif (addrPos == 10)
-    mov edx, offset meteoro11
+    mov ebx, offset meteoro11
   .elseif (addrPos == 11)
-    mov edx, offset meteoro12
+    mov ebx, offset meteoro12
   .elseif (addrPos == 12)
-    mov edx, offset meteoro13
+    mov ebx, offset meteoro13
   .elseif (addrPos == 13)
-    mov edx, offset meteoro14
+    mov ebx, offset meteoro14
   .elseif (addrPos == 14)
-    mov edx, offset meteoro15
+    mov ebx, offset meteoro15
   .elseif (addrPos == 15)
-    mov edx, offset meteoro16
+    mov ebx, offset meteoro16
   .elseif (addrPos == 16)
-    mov edx, offset meteoro17
+    mov ebx, offset meteoro17
   .elseif (addrPos == 17)
-    mov edx, offset meteoro18
+    mov ebx, offset meteoro18
   .elseif (addrPos == 18)
-    mov edx, offset meteoro19
+    mov ebx, offset meteoro19
   .elseif (addrPos == 19)
-    mov edx, offset meteoro20
+    mov ebx, offset meteoro20
   .elseif (addrPos == 20)
-    mov edx, offset meteoro21
+    mov ebx, offset meteoro21
   .elseif (addrPos == 21)
-    mov edx, offset meteoro22
+    mov ebx, offset meteoro22
   .elseif (addrPos == 22)
-    mov edx, offset meteoro23
+    mov ebx, offset meteoro23
   .elseif (addrPos == 23)
-    mov edx, offset meteoro24
+    mov ebx, offset meteoro24
   .elseif (addrPos == 24)
-    mov edx, offset meteoro25
+    mov ebx, offset meteoro25
   .elseif (addrPos == 25)
-    mov edx, offset meteoro26
+    mov ebx, offset meteoro26
   .elseif (addrPos == 26)
-    mov edx, offset meteoro27
+    mov ebx, offset meteoro27
   .elseif (addrPos == 27)
-    mov edx, offset meteoro28
+    mov ebx, offset meteoro28
   .elseif (addrPos == 28)
-    mov edx, offset meteoro29
+    mov ebx, offset meteoro29
   .elseif (addrPos == 29)
-    mov edx, offset meteoro30
+    mov ebx, offset meteoro30
   .elseif (addrPos == 30)
-    mov edx, offset meteoro31
+    mov ebx, offset meteoro31
   .elseif (addrPos == 31)
-    mov edx, offset meteoro32
+    mov ebx, offset meteoro32
   .elseif (addrPos == 32)
-    mov edx, offset meteoro33
+    mov ebx, offset meteoro33
   .elseif (addrPos == 33)
-    mov edx, offset meteoro34
+    mov ebx, offset meteoro34
   .elseif (addrPos == 34)
-    mov edx, offset meteoro35
+    mov ebx, offset meteoro35
   .elseif (addrPos == 35)
-    mov edx, offset meteoro36
+    mov ebx, offset meteoro36
   .elseif (addrPos == 36)
-    mov edx, offset meteoro37
+    mov ebx, offset meteoro37
   .elseif (addrPos == 37)
-    mov edx, offset meteoro38
+    mov ebx, offset meteoro38
   .elseif (addrPos == 38)
-    mov edx, offset meteoro39
+    mov ebx, offset meteoro39
   .elseif (addrPos == 39)
-    mov edx, offset meteoro40
+    mov ebx, offset meteoro40
   .elseif (addrPos == 40)
-    mov edx, offset meteoro41
+    mov ebx, offset meteoro41
   .elseif (addrPos == 41)
-    mov edx, offset meteoro42
+    mov ebx, offset meteoro42
   .elseif (addrPos == 42)
-    mov edx, offset meteoro43
+    mov ebx, offset meteoro43
   .elseif (addrPos == 43)
-    mov edx, offset meteoro44
+    mov ebx, offset meteoro44
   .elseif (addrPos == 44)
-    mov edx, offset meteoro45
+    mov ebx, offset meteoro45
   .elseif (addrPos == 45)
-    mov edx, offset meteoro46
+    mov ebx, offset meteoro46
   .elseif (addrPos == 46)
-    mov edx, offset meteoro47
+    mov ebx, offset meteoro47
   .elseif (addrPos == 47)
-    mov edx, offset meteoro48
+    mov ebx, offset meteoro48
   .elseif (addrPos == 48)
-    mov edx, offset meteoro49
+    mov ebx, offset meteoro49
   .elseif (addrPos == 49)
-    mov edx, offset meteoro50
+    mov ebx, offset meteoro50
   .endif  
 
   ret
@@ -658,25 +657,25 @@ retMeteoro endp
 invocarMeteoros proc
 
   invoke randomizer
-  assume edx:ptr meteoroStr
+  assume ebx:ptr meteoroStr
   invoke retMeteoro, addr listMeteoro.qtd
 
-  ;mov [edx].pos.x, ecx
-  ;mov [edx].pos.y, 0
-  ;mov [edx].speed.x, offset METEORO_SPEED.x
-  ;mov [edx].speed.y, offset METEORO_SPEED.y
-  ;mov [edx].vida, 2
-  ;mov [edx].contador, 0
-  ;mov [edx].prox, 0
+  ;mov [ebx].pos.x, ecx
+  ;mov [ebx].pos.y, 0
+  ;mov [ebx].speed.x, offset METEORO_SPEED.x
+  ;mov [ebx].speed.y, offset METEORO_SPEED.y
+  ;mov [ebx].vida, 2
+  ;mov [ebx].contador, 0
+  ;mov [ebx].prox, 0
 
   .if listMeteoro.qtd == 0
-    mov listMeteoro.primeiro, edx
+    mov listMeteoro.primeiro, ebx
   .else
     assume eax:ptr meteoroStr
     mov eax, listMeteoro.primeiro
     loop1:
       .if [eax].prox == 0
-        mov [eax].prox, edx
+        mov [eax].prox, ebx
         jmp fim
       .endif
 
@@ -684,114 +683,115 @@ invocarMeteoros proc
       jmp loop1
     fim:
   .endif
-  ;add listMeteoro.qtd, 1
+  mov eax, listMeteoro.qtd
+  inc eax
+  mov listMeteoro.qtd, eax
   ret
 invocarMeteoros endp
 
 retLaser proc addrPos:DWORD
-  mov eax, addrPos
-  assume edx:ptr laserDuplo
+  assume ebx:ptr laserDuplo
 
   .if (addrPos == 0)
-    mov edx, offset laser1
+    mov ebx, offset laser1
   .elseif (addrPos == 1)
-    mov edx, offset laser2
+    mov ebx, offset laser2
   .elseif (addrPos == 2)
-    mov edx, offset laser3
+    mov ebx, offset laser3
   .elseif (addrPos == 3)
-    mov edx, offset laser4
+    mov ebx, offset laser4
   .elseif (addrPos == 4)
-    mov edx, offset laser5
+    mov ebx, offset laser5
   .elseif (addrPos == 5)
-    mov edx, offset laser6
+    mov ebx, offset laser6
   .elseif (addrPos == 6)
-    mov edx, offset laser7
+    mov ebx, offset laser7
   .elseif (addrPos == 7)
-    mov edx, offset laser8
+    mov ebx, offset laser8
   .elseif (addrPos == 8)
-    mov edx, offset laser9
+    mov ebx, offset laser9
   .elseif (addrPos == 9)
-    mov edx, offset laser10
+    mov ebx, offset laser10
   .elseif (addrPos == 10)
-    mov edx, offset laser11
+    mov ebx, offset laser11
   .elseif (addrPos == 11)
-    mov edx, offset laser12
+    mov ebx, offset laser12
   .elseif (addrPos == 12)
-    mov edx, offset laser13
+    mov ebx, offset laser13
   .elseif (addrPos == 13)
-    mov edx, offset laser14
+    mov ebx, offset laser14
   .elseif (addrPos == 14)
-    mov edx, offset laser15
+    mov ebx, offset laser15
   .elseif (addrPos == 15)
-    mov edx, offset laser16
+    mov ebx, offset laser16
   .elseif (addrPos == 16)
-    mov edx, offset laser17
+    mov ebx, offset laser17
   .elseif (addrPos == 17)
-    mov edx, offset laser18
+    mov ebx, offset laser18
   .elseif (addrPos == 18)
-    mov edx, offset laser19
+    mov ebx, offset laser19
   .elseif (addrPos == 19)
-    mov edx, offset laser20
+    mov ebx, offset laser20
   .elseif (addrPos == 20)
-    mov edx, offset laser21
+    mov ebx, offset laser21
   .elseif (addrPos == 21)
-    mov edx, offset laser22
+    mov ebx, offset laser22
   .elseif (addrPos == 22)
-    mov edx, offset laser23
+    mov ebx, offset laser23
   .elseif (addrPos == 23)
-    mov edx, offset laser24
+    mov ebx, offset laser24
   .elseif (addrPos == 24)
-    mov edx, offset laser25
+    mov ebx, offset laser25
   .elseif (addrPos == 25)
-    mov edx, offset laser26
+    mov ebx, offset laser26
   .elseif (addrPos == 26)
-    mov edx, offset laser27
+    mov ebx, offset laser27
   .elseif (addrPos == 27)
-    mov edx, offset laser28
+    mov ebx, offset laser28
   .elseif (addrPos == 28)
-    mov edx, offset laser29
+    mov ebx, offset laser29
   .elseif (addrPos == 29)
-    mov edx, offset laser30
+    mov ebx, offset laser30
   .elseif (addrPos == 30)
-    mov edx, offset laser31
+    mov ebx, offset laser31
   .elseif (addrPos == 31)
-    mov edx, offset laser32
+    mov ebx, offset laser32
   .elseif (addrPos == 32)
-    mov edx, offset laser33
+    mov ebx, offset laser33
   .elseif (addrPos == 33)
-    mov edx, offset laser34
+    mov ebx, offset laser34
   .elseif (addrPos == 34)
-    mov edx, offset laser35
+    mov ebx, offset laser35
   .elseif (addrPos == 35)
-    mov edx, offset laser36
+    mov ebx, offset laser36
   .elseif (addrPos == 36)
-    mov edx, offset laser37
+    mov ebx, offset laser37
   .elseif (addrPos == 37)
-    mov edx, offset laser38
+    mov ebx, offset laser38
   .elseif (addrPos == 38)
-    mov edx, offset laser39
+    mov ebx, offset laser39
   .elseif (addrPos == 39)
-    mov edx, offset laser40
+    mov ebx, offset laser40
   .elseif (addrPos == 40)
-    mov edx, offset laser41
+    mov ebx, offset laser41
   .elseif (addrPos == 41)
-    mov edx, offset laser42
+    mov ebx, offset laser42
   .elseif (addrPos == 42)
-    mov edx, offset laser43
+    mov ebx, offset laser43
   .elseif (addrPos == 43)
-    mov edx, offset laser44
+    mov ebx, offset laser44
   .elseif (addrPos == 44)
-    mov edx, offset laser45
+    mov ebx, offset laser45
   .elseif (addrPos == 45)
-    mov edx, offset laser46
+    mov ebx, offset laser46
   .elseif (addrPos == 46)
-    mov edx, offset laser47
+    mov ebx, offset laser47
   .elseif (addrPos == 47)
-    mov edx, offset laser48
+    mov ebx, offset laser48
   .elseif (addrPos == 48)
-    mov edx, offset laser49
+    mov ebx, offset laser49
   .elseif (addrPos == 49)
-    mov edx, offset laser50
+    mov ebx, offset laser50
   .endif  
   
   ret
@@ -799,32 +799,31 @@ retLaser endp
 
 ; Adiciona um laser
 adicionaLaser proc  
-
-  mov eax, player.pos.x
-  mov ebx, 1
-  add ebx, eax
-  mov ecx, 31
-  add ecx, eax
- 
-  assume edx:ptr laserDuplo
+  assume ebx:ptr laserDuplo
   invoke retLaser, addr listLaser.qtd
 
-  ;mov [edx].pos1.x, ebx
-  ;mov [edx].pos2.x, ecx
-  ;mov [edx].pos1.y, offset player.pos.y
-  ;mov [edx].pos2.y, offset player.pos.y
-  ;mov [edx].speed.x, offset LASER_SPEED.x
-  ;mov [edx].speed.y, offset LASER_SPEED.y
-  ;mov [edx].prox, 0
+  mov eax, 1
+  add eax, player.pos.x
+  ;mov [ebx].pos1.x, eax
+
+  mov eax, 31
+  add eax, player.pos.x
+  ;mov [ebx].pos2.x, eax
+
+  ;mov [ebx].pos1.y, offset player.pos.y
+  ;mov [ebx].pos2.y, offset player.pos.y
+  ;mov [ebx].speed.x, offset LASER_SPEED.x
+  ;mov [ebx].speed.y, offset LASER_SPEED.y
+  ;mov [ebx].prox, 0
 
   .if listLaser.qtd == 0      
-    mov listLaser.primeiro, edx
+    mov listLaser.primeiro, ebx
   .else
     assume eax:ptr laserDuplo
     mov eax, listLaser.primeiro
     loop1:
       .if [eax].prox == 0
-        mov [eax].prox, edx
+        mov [eax].prox, ebx
         jmp fim
       .endif
 
@@ -832,12 +831,12 @@ adicionaLaser proc
       jmp loop1
     fim:
     assume eax:nothing
-    assume edx:nothing
+    assume ebx:nothing
   .endif
 
-  mov eax, listLaser.qtd
-  inc eax
-  mov listLaser.qtd, eax
+  ;mov eax, listLaser.qtd
+  ;inc eax
+  ;mov listLaser.qtd, eax
   ret
 adicionaLaser endp
 
@@ -914,7 +913,7 @@ jogo proc p:DWORD
     invoke movePlayer
     
     ; mover os lasers
-    .if listLaser.qtd == 40
+    .if   listLaser.qtd == 40
       assume eax:ptr laserDuplo
       mov eax, offset listLaser.primeiro
 

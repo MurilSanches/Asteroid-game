@@ -48,7 +48,7 @@ meteoroStr ends
 
 meteoros struct
   primeiro dd 0
-  qtd byte 0
+  qtd dd 0
 meteoros ends
 
 laserDuplo struct
