@@ -1,5 +1,3 @@
-
-;;;;;;; Jogo em desenvolvimento
 ; Todas as funções do jogo estão implementadas corretamente, 
 ; porém deram alguns problemas:
 ;
@@ -16,7 +14,8 @@
 ; Problema 3: não sabiamos como desenhar caracteres direito usando o TextOut, assim não ficou com um design tão bonito e agradável.
 ;
 ; Problema 4: não conseguiamos testar o fim do jogo por não ter como perder, 
-;             porém implementamos todos os códigos e caso conseguissemos solucionar o problema 1, poderiamos testar 
+;             porém implementamos todos os códigos e caso conseguissemos solucionar o problema 1, poderiamos testar
+;             e acredito eu que estaria tudo funcionando corretamente
 ;
 
 .386                   
@@ -205,23 +204,22 @@ tocaMusicaExplosao endp
       .endw 
 
       ; desenha os lasers
-      .if listLaser.qtd != 0
+      .if listLaser.qtd == 30
         invoke SelectObject, hMemDC2, laser
 
-      assume eax:ptr laserDuplo
-      mov eax, offset listLaser.primeiro
-        loop1:
-          invoke TransparentBlt, hDC, [eax].pos1.x, [eax].pos1.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
-          invoke TransparentBlt, hDC, [eax].pos2.x, [eax].pos2.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
-          .if [eax].prox == 0
-            jmp fim1
-          .else
-            mov eax, [eax].prox
-            jmp loop1
-          .endif
-       fim1:
-
-        .endif
+          assume eax:ptr laserDuplo
+          mov eax, offset listLaser.primeiro
+            loop1:
+              invoke TransparentBlt, hDC, [eax].pos1.x, [eax].pos1.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
+              invoke TransparentBlt, hDC, [eax].pos2.x, [eax].pos2.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
+              .if [eax].prox == 0
+                jmp fim1
+              .else
+                mov eax, [eax].prox
+                jmp loop1
+              .endif
+          fim1:
+      .endif
 
       ; desenha os meteoros
       .if listMeteoro.qtd != 0
@@ -837,7 +835,9 @@ adicionaLaser proc
     assume edx:nothing
   .endif
 
-  ;inc listLaser.qtd
+  mov eax, listLaser.qtd
+  inc eax
+  mov listLaser.qtd, eax
   ret
 adicionaLaser endp
 
@@ -847,7 +847,7 @@ runThread proc
   invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread3ID
   invoke CloseHandle, eax
 
-  mov eax, offset invocar
+  mov eax, offset invocar 
   invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread4ID
   invoke CloseHandle, eax
   ret
@@ -914,7 +914,7 @@ jogo proc p:DWORD
     invoke movePlayer
     
     ; mover os lasers
-    .if listLaser.qtd != 0
+    .if listLaser.qtd == 40
       assume eax:ptr laserDuplo
       mov eax, offset listLaser.primeiro
 
