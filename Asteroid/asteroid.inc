@@ -104,6 +104,7 @@ ENDM
 
   ;speed 
   LASER_SPEED point<0, -6>
+  METEORO_SPEED point<0, -10>
 
 .DATA
   ; imagens
@@ -153,6 +154,108 @@ ENDM
   player naveStr <<370, 500>, 0, <0, 0>, 3>
   listLaser lasers<OFFSET laser0, 0>
   listMeteoro meteoros<OFFSET meteoro0, 0>
+
+  laser1 laserDuplo<<501, 400>, <531, 400>, <0, -6>, 0>
+  laser2 laserDuplo<>
+  laser3 laserDuplo<>
+  laser4 laserDuplo<>
+  laser5 laserDuplo<>
+  laser6 laserDuplo<>
+  laser7 laserDuplo<>
+  laser8 laserDuplo<>
+  laser9 laserDuplo<>
+  laser10 laserDuplo<>
+  laser11 laserDuplo<>
+  laser12 laserDuplo<>
+  laser13 laserDuplo<>
+  laser14 laserDuplo<>
+  laser15 laserDuplo<>
+  laser16 laserDuplo<>
+  laser17 laserDuplo<>
+  laser18 laserDuplo<>
+  laser19 laserDuplo<>
+  laser20 laserDuplo<>
+  laser21 laserDuplo<>
+  laser22 laserDuplo<>
+  laser23 laserDuplo<>
+  laser24 laserDuplo<>
+  laser25 laserDuplo<>
+  laser26 laserDuplo<>
+  laser27 laserDuplo<>
+  laser28 laserDuplo<>
+  laser29 laserDuplo<>
+  laser30 laserDuplo<>
+  laser31 laserDuplo<>
+  laser32 laserDuplo<>
+  laser33 laserDuplo<>
+  laser34 laserDuplo<>
+  laser35 laserDuplo<>
+  laser36 laserDuplo<>
+  laser37 laserDuplo<>
+  laser38 laserDuplo<>
+  laser39 laserDuplo<>
+  laser40 laserDuplo<>
+  laser41 laserDuplo<>
+  laser42 laserDuplo<>
+  laser43 laserDuplo<>
+  laser44 laserDuplo<>
+  laser45 laserDuplo<>
+  laser46 laserDuplo<>
+  laser47 laserDuplo<>
+  laser48 laserDuplo<>
+  laser49 laserDuplo<>
+  laser50 laserDuplo<>
+
+  meteoro1 meteoroStr<>
+  meteoro2 meteoroStr<>
+  meteoro3 meteoroStr<>
+  meteoro4 meteoroStr<>
+  meteoro5 meteoroStr<>
+  meteoro6 meteoroStr<>
+  meteoro7 meteoroStr<>
+  meteoro8 meteoroStr<>
+  meteoro9 meteoroStr<>
+  meteoro10 meteoroStr<>
+  meteoro11 meteoroStr<>
+  meteoro12 meteoroStr<>
+  meteoro13 meteoroStr<>
+  meteoro14 meteoroStr<>
+  meteoro15 meteoroStr<>
+  meteoro16 meteoroStr<>
+  meteoro17 meteoroStr<>
+  meteoro18 meteoroStr<>
+  meteoro19 meteoroStr<>
+  meteoro20 meteoroStr<>
+  meteoro21 meteoroStr<>
+  meteoro22 meteoroStr<>
+  meteoro23 meteoroStr<>
+  meteoro24 meteoroStr<>
+  meteoro25 meteoroStr<>
+  meteoro26 meteoroStr<>
+  meteoro27 meteoroStr<>
+  meteoro28 meteoroStr<>
+  meteoro29 meteoroStr<>
+  meteoro30 meteoroStr<>
+  meteoro31 meteoroStr<>
+  meteoro32 meteoroStr<>
+  meteoro33 meteoroStr<>
+  meteoro34 meteoroStr<>
+  meteoro35 meteoroStr<>
+  meteoro36 meteoroStr<>
+  meteoro37 meteoroStr<>
+  meteoro38 meteoroStr<>
+  meteoro39 meteoroStr<>
+  meteoro40 meteoroStr<>
+  meteoro41 meteoroStr<>
+  meteoro42 meteoroStr<>
+  meteoro43 meteoroStr<>
+  meteoro44 meteoroStr<>
+  meteoro45 meteoroStr<>
+  meteoro46 meteoroStr<>
+  meteoro47 meteoroStr<>
+  meteoro48 meteoroStr<>
+  meteoro49 meteoroStr<>
+  meteoro50 meteoroStr<>
 
   meteoro0 meteoroStr<>
   laser0 laserDuplo<>

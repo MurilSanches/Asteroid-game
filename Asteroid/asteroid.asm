@@ -1,3 +1,24 @@
+
+;;;;;;; Jogo em desenvolvimento
+; Todas as funções do jogo estão implementadas corretamente, 
+; porém deram alguns problemas:
+;
+; Problema 1: não encontrarmos uma forma simples de fazer uma lista ligada com os meteoros e lasers, 
+;             e todas as outras maneiras de contornar esse problema também deram errado também.
+;
+; 1 - Na primeira tentativa tentamos instanciar um novo laser ou um novo meteoro por tempo ou toda vez que o jogador apertasse [F],
+;     porém não conseguimos instanciar uma nova instancia da struct laserDuplo e MeteoroSTr no arquivo '.asm'
+; 2 - Assim tentamos instanciar todas os lasers e meteoros no '.inc', e depois so modificariamos os valores dos campos,
+;     porém não conseguimos modificar isso porque dava um novo erro, além dissod essa forma traria outro problema que o jogo não seria mais infinito
+; 
+; Problema 2: o sistema de pontuação ao invés de escrever os números, estava escrevendo o caracteres da tabela ASCII.
+;             
+; Problema 3: não sabiamos como desenhar caracteres direito usando o TextOut, assim não ficou com um design tão bonito e agradável.
+;
+; Problema 4: não conseguiamos testar o fim do jogo por não ter como perder, 
+;             porém implementamos todos os códigos e caso conseguissemos solucionar o problema 1, poderiamos testar 
+;
+
 .386                   
 .model flat, stdcall   
 option casemap:none  
@@ -187,8 +208,8 @@ tocaMusicaExplosao endp
       .if listLaser.qtd != 0
         invoke SelectObject, hMemDC2, laser
 
-        assume eax:ptr laserDuplo
-       mov eax, listLaser.primeiro
+      assume eax:ptr laserDuplo
+      mov eax, offset listLaser.primeiro
         loop1:
           invoke TransparentBlt, hDC, [eax].pos1.x, [eax].pos1.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
           invoke TransparentBlt, hDC, [eax].pos2.x, [eax].pos2.y, LASER_SIZE.x, LASER_SIZE.y, hMemDC2, 0, 0, LASER_SIZE.x, LASER_SIZE.y, 16777215 
@@ -198,7 +219,7 @@ tocaMusicaExplosao endp
             mov eax, [eax].prox
             jmp loop1
           .endif
-        fim1:
+       fim1:
 
         .endif
 
@@ -442,7 +463,7 @@ changePlayerSpeed endp
 ; funcao para randomizar numeros
 
 randomizer proc
-  mov edx, 500 
+  mov ecx, 500 
   ret
 randomizer endp
 
@@ -526,23 +547,138 @@ movePlayer proc uses eax
   ret
 movePlayer endp
 
+retMeteoro proc addrPos:DWORD
+  mov eax, addrPos
+  assume edx:ptr meteoroStr
+
+  .if (addrPos == 0)
+    mov edx, offset meteoro1
+  .elseif (addrPos == 1)
+    mov edx, offset meteoro2
+  .elseif (addrPos == 2)
+    mov edx, offset meteoro3
+  .elseif (addrPos == 3)
+    mov edx, offset meteoro4
+  .elseif (addrPos == 4)
+    mov edx, offset meteoro5
+  .elseif (addrPos == 5)
+    mov edx, offset meteoro6
+  .elseif (addrPos == 6)
+    mov edx, offset meteoro7
+  .elseif (addrPos == 7)
+    mov edx, offset meteoro8
+  .elseif (addrPos == 8)
+    mov edx, offset meteoro9
+  .elseif (addrPos == 9)
+    mov edx, offset meteoro10
+  .elseif (addrPos == 10)
+    mov edx, offset meteoro11
+  .elseif (addrPos == 11)
+    mov edx, offset meteoro12
+  .elseif (addrPos == 12)
+    mov edx, offset meteoro13
+  .elseif (addrPos == 13)
+    mov edx, offset meteoro14
+  .elseif (addrPos == 14)
+    mov edx, offset meteoro15
+  .elseif (addrPos == 15)
+    mov edx, offset meteoro16
+  .elseif (addrPos == 16)
+    mov edx, offset meteoro17
+  .elseif (addrPos == 17)
+    mov edx, offset meteoro18
+  .elseif (addrPos == 18)
+    mov edx, offset meteoro19
+  .elseif (addrPos == 19)
+    mov edx, offset meteoro20
+  .elseif (addrPos == 20)
+    mov edx, offset meteoro21
+  .elseif (addrPos == 21)
+    mov edx, offset meteoro22
+  .elseif (addrPos == 22)
+    mov edx, offset meteoro23
+  .elseif (addrPos == 23)
+    mov edx, offset meteoro24
+  .elseif (addrPos == 24)
+    mov edx, offset meteoro25
+  .elseif (addrPos == 25)
+    mov edx, offset meteoro26
+  .elseif (addrPos == 26)
+    mov edx, offset meteoro27
+  .elseif (addrPos == 27)
+    mov edx, offset meteoro28
+  .elseif (addrPos == 28)
+    mov edx, offset meteoro29
+  .elseif (addrPos == 29)
+    mov edx, offset meteoro30
+  .elseif (addrPos == 30)
+    mov edx, offset meteoro31
+  .elseif (addrPos == 31)
+    mov edx, offset meteoro32
+  .elseif (addrPos == 32)
+    mov edx, offset meteoro33
+  .elseif (addrPos == 33)
+    mov edx, offset meteoro34
+  .elseif (addrPos == 34)
+    mov edx, offset meteoro35
+  .elseif (addrPos == 35)
+    mov edx, offset meteoro36
+  .elseif (addrPos == 36)
+    mov edx, offset meteoro37
+  .elseif (addrPos == 37)
+    mov edx, offset meteoro38
+  .elseif (addrPos == 38)
+    mov edx, offset meteoro39
+  .elseif (addrPos == 39)
+    mov edx, offset meteoro40
+  .elseif (addrPos == 40)
+    mov edx, offset meteoro41
+  .elseif (addrPos == 41)
+    mov edx, offset meteoro42
+  .elseif (addrPos == 42)
+    mov edx, offset meteoro43
+  .elseif (addrPos == 43)
+    mov edx, offset meteoro44
+  .elseif (addrPos == 44)
+    mov edx, offset meteoro45
+  .elseif (addrPos == 45)
+    mov edx, offset meteoro46
+  .elseif (addrPos == 46)
+    mov edx, offset meteoro47
+  .elseif (addrPos == 47)
+    mov edx, offset meteoro48
+  .elseif (addrPos == 48)
+    mov edx, offset meteoro49
+  .elseif (addrPos == 49)
+    mov edx, offset meteoro50
+  .endif  
+
+  ret
+retMeteoro endp 
+
 ; funcao que invoca os meteoros com o tempo
 invocarMeteoros proc
 
   invoke randomizer
+  assume edx:ptr meteoroStr
+  invoke retMeteoro, addr listMeteoro.qtd
 
-  ;;;;;;; NÂO CONSIGO INSTANCIAR NOVAS STRUCTS AQUI
-
-  ;meteoro1 meteoroStr<>
+  ;mov [edx].pos.x, ecx
+  ;mov [edx].pos.y, 0
+  ;mov [edx].speed.x, offset METEORO_SPEED.x
+  ;mov [edx].speed.y, offset METEORO_SPEED.y
+  ;mov [edx].vida, 2
+  ;mov [edx].contador, 0
+  ;mov [edx].prox, 0
 
   .if listMeteoro.qtd == 0
-    mov listMeteoro.primeiro, OFFSET meteoro0
+    mov listMeteoro.primeiro, edx
   .else
     assume eax:ptr meteoroStr
     mov eax, listMeteoro.primeiro
     loop1:
       .if [eax].prox == 0
-        mov [eax].prox, offset meteoro0
+        mov [eax].prox, edx
         jmp fim
       .endif
 
@@ -554,6 +690,115 @@ invocarMeteoros proc
   ret
 invocarMeteoros endp
 
+retLaser proc addrPos:DWORD
+  mov eax, addrPos
+  assume edx:ptr laserDuplo
+
+  .if (addrPos == 0)
+    mov edx, offset laser1
+  .elseif (addrPos == 1)
+    mov edx, offset laser2
+  .elseif (addrPos == 2)
+    mov edx, offset laser3
+  .elseif (addrPos == 3)
+    mov edx, offset laser4
+  .elseif (addrPos == 4)
+    mov edx, offset laser5
+  .elseif (addrPos == 5)
+    mov edx, offset laser6
+  .elseif (addrPos == 6)
+    mov edx, offset laser7
+  .elseif (addrPos == 7)
+    mov edx, offset laser8
+  .elseif (addrPos == 8)
+    mov edx, offset laser9
+  .elseif (addrPos == 9)
+    mov edx, offset laser10
+  .elseif (addrPos == 10)
+    mov edx, offset laser11
+  .elseif (addrPos == 11)
+    mov edx, offset laser12
+  .elseif (addrPos == 12)
+    mov edx, offset laser13
+  .elseif (addrPos == 13)
+    mov edx, offset laser14
+  .elseif (addrPos == 14)
+    mov edx, offset laser15
+  .elseif (addrPos == 15)
+    mov edx, offset laser16
+  .elseif (addrPos == 16)
+    mov edx, offset laser17
+  .elseif (addrPos == 17)
+    mov edx, offset laser18
+  .elseif (addrPos == 18)
+    mov edx, offset laser19
+  .elseif (addrPos == 19)
+    mov edx, offset laser20
+  .elseif (addrPos == 20)
+    mov edx, offset laser21
+  .elseif (addrPos == 21)
+    mov edx, offset laser22
+  .elseif (addrPos == 22)
+    mov edx, offset laser23
+  .elseif (addrPos == 23)
+    mov edx, offset laser24
+  .elseif (addrPos == 24)
+    mov edx, offset laser25
+  .elseif (addrPos == 25)
+    mov edx, offset laser26
+  .elseif (addrPos == 26)
+    mov edx, offset laser27
+  .elseif (addrPos == 27)
+    mov edx, offset laser28
+  .elseif (addrPos == 28)
+    mov edx, offset laser29
+  .elseif (addrPos == 29)
+    mov edx, offset laser30
+  .elseif (addrPos == 30)
+    mov edx, offset laser31
+  .elseif (addrPos == 31)
+    mov edx, offset laser32
+  .elseif (addrPos == 32)
+    mov edx, offset laser33
+  .elseif (addrPos == 33)
+    mov edx, offset laser34
+  .elseif (addrPos == 34)
+    mov edx, offset laser35
+  .elseif (addrPos == 35)
+    mov edx, offset laser36
+  .elseif (addrPos == 36)
+    mov edx, offset laser37
+  .elseif (addrPos == 37)
+    mov edx, offset laser38
+  .elseif (addrPos == 38)
+    mov edx, offset laser39
+  .elseif (addrPos == 39)
+    mov edx, offset laser40
+  .elseif (addrPos == 40)
+    mov edx, offset laser41
+  .elseif (addrPos == 41)
+    mov edx, offset laser42
+  .elseif (addrPos == 42)
+    mov edx, offset laser43
+  .elseif (addrPos == 43)
+    mov edx, offset laser44
+  .elseif (addrPos == 44)
+    mov edx, offset laser45
+  .elseif (addrPos == 45)
+    mov edx, offset laser46
+  .elseif (addrPos == 46)
+    mov edx, offset laser47
+  .elseif (addrPos == 47)
+    mov edx, offset laser48
+  .elseif (addrPos == 48)
+    mov edx, offset laser49
+  .elseif (addrPos == 49)
+    mov edx, offset laser50
+  .endif  
+  
+  ret
+retLaser endp
+
 ; Adiciona um laser
 adicionaLaser proc  
 
@@ -562,27 +807,26 @@ adicionaLaser proc
   add ebx, eax
   mov ecx, 31
   add ecx, eax
+ 
+  assume edx:ptr laserDuplo
+  invoke retLaser, addr listLaser.qtd
 
-  ;;;;;;; NÂO CONSIGO INSTANCIAR NOVAS STRUCTS AQUI
-
-  ;laser1 laserDuplo<>
-  ;laser1 laserDuplo<<ebx, player.pos.y>, <ecx, player.pos.y>, <0, -6>, 0>
-  ;mov laser1.pos1.x, ebx
-  ;mov laser1.pos1.y, offset player.pos.y
-  ;mov laser1.pos2.x, ecx
-  ;mov laser1.pos2.y, offset player.pos.y
-  ;mov laser1.speed.x, offset LASER_SPEED.x
-  ;mov laser1.speed.y, offset LASER_SPEED.y
-  ;mov laser1.prox, 0
+  ;mov [edx].pos1.x, ebx
+  ;mov [edx].pos2.x, ecx
+  ;mov [edx].pos1.y, offset player.pos.y
+  ;mov [edx].pos2.y, offset player.pos.y
+  ;mov [edx].speed.x, offset LASER_SPEED.x
+  ;mov [edx].speed.y, offset LASER_SPEED.y
+  ;mov [edx].prox, 0
 
   .if listLaser.qtd == 0      
-    mov listLaser.primeiro, OFFSET laser0
+    mov listLaser.primeiro, edx
   .else
     assume eax:ptr laserDuplo
     mov eax, listLaser.primeiro
     loop1:
       .if [eax].prox == 0
-        mov [eax].prox, OFFSET laser0
+        mov [eax].prox, edx
         jmp fim
       .endif
 
@@ -590,9 +834,10 @@ adicionaLaser proc
       jmp loop1
     fim:
     assume eax:nothing
+    assume edx:nothing
   .endif
 
-  ;add listLaser.qtd, 1
+  ;inc listLaser.qtd
   ret
 adicionaLaser endp
 
@@ -625,39 +870,45 @@ jogo proc p:DWORD
     invoke Sleep, 30
 
     ; verifica se bateu nos meteoros
-    assume eax:ptr meteoroStr
-    mov eax, listMeteoro.primeiro
-    loop1:
-      invoke hitMeteoro, addr [eax]
-      .if [eax].prox != 0
-        mov eax, [eax].prox
-        jmp loop1
-      .endif
-        jmp fim1
-      fim1:
-    assume eax:nothing  
-
-    ; verifica se os lasers bateram nos meteoros
-    assume eax:ptr meteoroStr
-    assume ebx:ptr laserDuplo
-    mov eax, listMeteoro.primeiro
-    mov ebx, listLaser.primeiro
-
-    loop2:
-      loop3:
-        invoke colisaoLaser, addr [ebx], addr [eax]
+    .if listMeteoro.qtd != 0
+      assume eax:ptr meteoroStr
+      mov eax, listMeteoro.primeiro
+      loop1:
+        invoke hitMeteoro, addr [eax]
         .if [eax].prox != 0
           mov eax, [eax].prox
-          jmp loop3
+          jmp loop1
         .endif
-          jmp fim3
-        fim3:
-      .if [ebx].prox != 0
-        mov ebx, [ebx].prox
-        jmp loop2
-      .endif
-        jmp fim2
-      fim2:    
+          jmp fim1
+        fim1:
+      assume eax:nothing 
+    .endif
+
+    ; verifica se os lasers bateram nos meteoros
+    .if listMeteoro.qtd != 0 
+      .if listLaser.qtd != 0
+        assume eax:ptr meteoroStr
+        assume ebx:ptr laserDuplo
+        mov eax, listMeteoro.primeiro
+        mov ebx, listLaser.primeiro
+
+        loop2:
+          loop3:
+            invoke colisaoLaser, addr [ebx], addr [eax]
+            .if [eax].prox != 0
+              mov eax, [eax].prox
+              jmp loop3
+            .endif
+              jmp fim3
+            fim3:
+          .if [ebx].prox != 0
+            mov ebx, [ebx].prox
+            jmp loop2
+          .endif
+            jmp fim2
+          fim2:
+        .endif 
+      .endif     
 
     ; chama a funcao para mover a nave
     invoke movePlayer
@@ -713,7 +964,7 @@ invocar proc p:DWORD
   .while estagio == 1
     invoke Sleep, dificuldade
 
-    invoke invocarMeteoros
+    ;invoke invocarMeteoros
 
     .if pontuacao > 1000
       mov dificuldade, 600
